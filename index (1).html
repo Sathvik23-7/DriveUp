@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveUp</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; }
+        .view { display: none; height: calc(100vh - 60px); padding-bottom: 20px; }
+        .active { display: block; }
+        
+        /* Bottom Nav */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: white; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; }
+        .nav-btn { background: none; border: none; font-size: 12px; cursor: pointer; color: #7f8c8d; }
+        
+        /* Common UI */
+        .page-header { padding: 20px; background: white; margin-bottom: 10px; }
+        .card { background: white; margin: 10px; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <div id="map-view" class="view active"><div id="map" style="height: 100%;"></div></div>
+    <div id="rewards-view" class="view">
+        <div class="page-header"><h2>🎁 Rewards Wallet</h2></div>
+        <div class="card"><h3>Balance: ₹150</h3><button onclick="alert('Redirecting to UPI...')">Redeem Now</button></div>
+    </div>
+    <div id="clans-view" class="view">
+        <div class="page-header"><h2>🏆 Clan Leaderboard</h2></div>
+        <div class="card">1. Triumph Riders - 8,450 pts</div>
+    </div>
+    <div id="profile-view" class="view">
+        <div class="page-header"><h2>👤 Profile</h2></div>
+        <div class="card"><button>Login with Google</button></div>
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="show('map-view')">📍 Map</button>
+        <button class="nav-btn" onclick="show('rewards-view')">🎁 Rewards</button>
+        <button class="nav-btn" onclick="show('clans-view')">🏆 Clans</button>
+        <button class="nav-btn" onclick="show('profile-view')">👤 Profile</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        function show(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        const map = L.map('map').setView([17.3850, 78.4867], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    </script>
+</body>
+</html>
