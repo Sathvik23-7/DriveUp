@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DriveUp">
+<meta name="theme-color" content="#0a0a0a">
+<title>DriveUp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg2: #111111;
+  --bg3: #1a1a1a;
+  --bg4: #222222;
+  --border: #2a2a2a;
+  --border2: #333333;
+  --text: #f0f0f0;
+  --text2: #aaaaaa;
+  --text3: #666666;
+  --accent: #f5a623;
+  --accent2: #e8950f;
+  --green: #4ade80;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --tab-h: 72px;
+  --header-h: 64px;
+}
+.light {
+  --bg: #f4f4f4;
+  --bg2: #ffffff;
+  --bg3: #ececec;
+  --bg4: #e0e0e0;
+  --border: #d8d8d8;
+  --border2: #cccccc;
+  --text: #111111;
+  --text2: #555555;
+  --text3: #999999;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:'DM Sans',sans-serif; color:var(--text); }
+
+/* ── APP SHELL ── */
+#app { width:100%; height:100%; display:flex; flex-direction:column; position:relative; overflow:hidden; }
+#screens { flex:1; overflow:hidden; position:relative; }
+.screen { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; padding-bottom:var(--tab-h); display:none; scroll-behavior:smooth; }
+.screen.active { display:block; }
+.screen::-webkit-scrollbar { display:none; }
+
+/* ── HEADER ── */
+.header { position:sticky; top:0; z-index:50; padding:12px 16px 10px; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.header-left { display:flex; flex-direction:column; }
+.header-greeting { font-size:11px; color:var(--text3); font-family:'DM Sans',sans-serif; letter-spacing:.5px; }
+.header-name { font-size:18px; font-weight:700; font-family:'Syne',sans-serif; color:var(--text); line-height:1.2; cursor:pointer; }
+.header-name span { color:var(--accent); }
+.header-right { display:flex; align-items:center; gap:10px; }
+
+/* ── CIRCULAR MAP ── */
+#map-circle-wrap { position:relative; cursor:pointer; }
+#map-circle { width:68px; height:68px; border-radius:50%; overflow:hidden; border:2px solid var(--accent); box-shadow:0 0 0 4px rgba(245,166,35,.12); position:relative; transition:all .3s; }
+#map-circle canvas { width:100%; height:100%; }
+.map-live-dot { position:absolute; bottom:6px; right:6px; width:8px; height:8px; background:var(--green); border-radius:50%; border:1.5px solid var(--bg); animation:pulse 2s infinite; z-index:2; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)} 50%{box-shadow:0 0 0 5px rgba(74,222,128,0)} }
+.map-expand-hint { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--text3); white-space:nowrap; letter-spacing:.3px; }
+
+/* ── SPEED BADGE ── */
+.speed-badge { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:6px 10px; text-align:center; min-width:52px; }
+.speed-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--accent); line-height:1; }
+.speed-label { font-size:9px; color:var(--text3); letter-spacing:.5px; margin-top:1px; }
+.speed-badge.warning .speed-val { color:var(--red); }
+
+/* ── THEME TOGGLE ── */
+.theme-btn { width:34px; height:34px; border-radius:50%; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; transition:all .2s; }
+
+/* ── FULL SCREEN MAP ── */
+#map-fullscreen { position:fixed; inset:0; z-index:200; background:var(--bg); display:none; flex-direction:column; }
+#map-fullscreen.open { display:flex; animation:slideUp .3s ease; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.map-fs-header { padding:16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+.map-fs-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; }
+.map-fs-filters { display:flex; gap:8px; overflow-x:auto; padding:10px 16px; scrollbar-width:none; }
+.map-fs-filters::-webkit-scrollbar { display:none; }
+.filter-pill { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; border:1px solid var(--border); background:var(--bg3); color:var(--text2); cursor:pointer; transition:all .2s; white-space:nowrap; }
+.filter-pill.active { background:var(--accent); color:#000; border-color:var(--accent); }
+#map-canvas-full { flex:1; position:relative; overflow:hidden; }
+#map-canvas-full canvas { width:100%; height:100%; cursor:pointer; }
+.close-map-btn { width:36px; height:36px; border-radius:50%; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; }
+
+/* ── CONTENT SECTIONS ── */
+.section { padding:16px; }
+.section-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+.section-title a { font-size:11px; color:var(--accent); letter-spacing:0; text-decoration:none; font-family:'DM Sans',sans-serif; font-weight:500; }
+
+/* ── DAILY MISSION CARD ── */
+.mission-hero { margin:0 16px 6px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:18px; position:relative; overflow:hidden; }
+.mission-hero::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(245,166,35,.15) 0%, transparent 70%); pointer-events:none; }
+.mission-tag { font-size:10px; font-weight:600; letter-spacing:1px; color:var(--accent); text-transform:uppercase; margin-bottom:8px; }
+.mission-hero-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; line-height:1.25; margin-bottom:4px; }
+.mission-hero-sub { font-size:13px; color:var(--text2); margin-bottom:14px; }
+.progress-bar-wrap { background:var(--bg4); border-radius:8px; height:8px; margin-bottom:8px; overflow:hidden; }
+.progress-bar-fill { height:100%; border-radius:8px; background:linear-gradient(90deg, var(--accent2), var(--accent)); transition:width .8s cubic-bezier(.4,0,.2,1); }
+.mission-meta { display:flex; align-items:center; justify-content:space-between; }
+.mission-pts { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:var(--accent); }
+.mission-pts span { font-size:11px; font-weight:400; color:var(--text3); }
+.mission-cta { background:var(--accent); color:#000; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Syne',sans-serif; transition:all .15s; active-scale:.95; }
+.mission-cta:active { transform:scale(.95); }
+
+/* ── QUICK TASKS ── */
+.quick-tasks { display:flex; gap:10px; overflow-x:auto; padding:0 16px 4px; scrollbar-width:none; }
+.quick-tasks::-webkit-scrollbar { display:none; }
+.quick-card { flex-shrink:0; width:130px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:all .2s; }
+.quick-card:active { transform:scale(.97); }
+.quick-card-icon { font-size:20px; margin-bottom:8px; }
+.quick-card-name { font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text); }
+.quick-card-dist { font-size:11px; color:var(--text3); margin-bottom:8px; }
+.quick-card-bar { background:var(--bg4); border-radius:4px; height:4px; overflow:hidden; }
+.quick-card-fill { height:100%; border-radius:4px; background:var(--accent); }
+.quick-card-pts { font-size:11px; color:var(--accent); font-weight:600; margin-top:6px; }
+
+/* ── FRIENDS NEARBY ── */
+.friends-list { display:flex; flex-direction:column; gap:8px; }
+.friend-row { display:flex; align-items:center; gap:12px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:all .2s; }
+.friend-row:active { transform:scale(.98); }
+.friend-avatar { width:40px; height:40px; border-radius:50%; background:var(--bg4); display:flex; align-items:center; justify-content:center; font-size:16px; border:2px solid var(--border2); flex-shrink:0; position:relative; }
+.friend-online { position:absolute; bottom:1px; right:1px; width:10px; height:10px; background:var(--green); border-radius:50%; border:2px solid var(--bg3); }
+.friend-info { flex:1; }
+.friend-name { font-size:14px; font-weight:600; color:var(--text); }
+.friend-id { font-size:11px; color:var(--text3); }
+.friend-dist { font-size:12px; color:var(--accent); font-weight:600; }
+.friend-alert { background:rgba(245,166,35,.08); border:1px solid rgba(245,166,35,.2); border-radius:10px; padding:10px 14px; margin-bottom:10px; display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text2); }
+.friend-alert-icon { font-size:18px; }
+
+/* ── PARTNER STORES ── */
+.stores-list { display:flex; gap:10px; overflow-x:auto; padding:0 0 4px; scrollbar-width:none; }
+.stores-list::-webkit-scrollbar { display:none; }
+.store-card { flex-shrink:0; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; cursor:pointer; min-width:120px; transition:all .2s; }
+.store-card:active { transform:scale(.97); }
+.store-icon { font-size:22px; margin-bottom:6px; }
+.store-name { font-size:12px; font-weight:600; color:var(--text); margin-bottom:2px; }
+.store-dist { font-size:11px; color:var(--accent); font-weight:500; }
+.store-pts { font-size:11px; color:var(--text3); }
+
+/* ── BOTTOM TABS ── */
+#tab-bar { height:var(--tab-h); background:var(--bg2); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-around; padding:0 4px; padding-bottom:env(safe-area-inset-bottom); flex-shrink:0; position:relative; z-index:100; }
+.tab-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; padding:8px 4px; border-radius:10px; transition:all .2s; position:relative; }
+.tab-btn .tab-icon { font-size:20px; transition:transform .2s; }
+.tab-btn .tab-label { font-size:10px; color:var(--text3); font-weight:500; letter-spacing:.3px; transition:color .2s; }
+.tab-btn.active .tab-label { color:var(--accent); }
+.tab-btn.active .tab-icon { transform:scale(1.15); }
+.tab-indicator { position:absolute; top:0; left:50%; transform:translateX(-50%); width:20px; height:2px; background:var(--accent); border-radius:0 0 4px 4px; opacity:0; transition:opacity .2s; }
+.tab-btn.active .tab-indicator { opacity:1; }
+.tab-notif { position:absolute; top:6px; right:calc(50% - 14px); width:8px; height:8px; background:var(--red); border-radius:50%; border:1.5px solid var(--bg2); }
+
+/* ── PROFILE POPUP ── */
+#profile-popup { position:fixed; inset:0; z-index:300; display:none; }
+#profile-popup.open { display:block; }
+.popup-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(4px); }
+.popup-sheet { position:absolute; bottom:0; left:0; right:0; background:var(--bg2); border-radius:24px 24px 0 0; padding:24px 20px 40px; max-height:85vh; overflow-y:auto; animation:sheetUp .3s cubic-bezier(.4,0,.2,1); }
+@keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.popup-handle { width:40px; height:4px; background:var(--border2); border-radius:4px; margin:0 auto 20px; }
+.popup-user-row { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.popup-avatar { width:56px; height:56px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:24px; border:2px solid var(--accent); }
+.popup-user-info { flex:1; }
+.popup-display-name { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--text); }
+.popup-id-row { display:flex; align-items:center; gap:8px; margin-top:4px; }
+.popup-drive-id { font-size:12px; color:var(--text3); background:var(--bg3); border:1px solid var(--border); padding:3px 10px; border-radius:20px; font-family:'DM Sans',sans-serif; letter-spacing:.5px; }
+.popup-share-btn { font-size:12px; color:var(--accent); background:none; border:none; cursor:pointer; font-weight:600; padding:2px 4px; }
+.popup-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.popup-stat { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; }
+.popup-stat-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--accent); }
+.popup-stat-label { font-size:10px; color:var(--text3); margin-top:2px; letter-spacing:.3px; }
+.popup-section-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:12px; }
+.route-item { display:flex; align-items:center; gap:12px; padding:12px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; }
+.route-dot { width:10px; height:10px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+.route-info { flex:1; }
+.route-name { font-size:13px; font-weight:600; color:var(--text); }
+.route-meta { font-size:11px; color:var(--text3); margin-top:2px; }
+.route-pts { font-size:13px; font-weight:700; color:var(--accent); }
+
+/* ── MISSIONS SCREEN ── */
+.missions-filter { display:flex; gap:8px; overflow-x:auto; padding:12px 16px; scrollbar-width:none; }
+.missions-filter::-webkit-scrollbar { display:none; }
+.missions-card { margin:0 16px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:16px; cursor:pointer; transition:all .2s; }
+.missions-card:active { transform:scale(.98); }
+.missions-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; }
+.missions-card-brand { font-size:11px; color:var(--text3); font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+.missions-card-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-top:2px; line-height:1.3; }
+.missions-badge { font-size:10px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(245,166,35,.15); color:var(--accent); white-space:nowrap; }
+.missions-badge.hot { background:rgba(248,113,113,.15); color:var(--red); }
+.missions-badge.done { background:rgba(74,222,128,.15); color:var(--green); }
+.missions-card-bar-row { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.missions-card-bar-wrap { flex:1; background:var(--bg4); border-radius:4px; height:5px; overflow:hidden; }
+.missions-card-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent2),var(--accent)); }
+.missions-card-pts { font-size:12px; font-weight:700; color:var(--accent); white-space:nowrap; }
+
+/* ── REWARDS SCREEN ── */
+.rewards-header { padding:16px; text-align:center; }
+.rewards-total { font-family:'Syne',sans-serif; font-size:48px; font-weight:800; color:var(--accent); line-height:1; }
+.rewards-total-label { font-size:13px; color:var(--text3); margin-top:4px; }
+.rewards-actions { display:flex; gap:10px; justify-content:center; margin-top:16px; }
+.rewards-action-btn { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:10px 20px; font-size:13px; font-weight:600; cursor:pointer; color:var(--text); transition:all .2s; }
+.rewards-action-btn.primary { background:var(--accent); color:#000; border-color:var(--accent); }
+.coupon-card { margin:0 16px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:all .2s; position:relative; overflow:hidden; }
+.coupon-card::after { content:''; position:absolute; left:60px; top:0; bottom:0; width:1px; background:repeating-linear-gradient(var(--bg3) 0,var(--bg3) 4px,var(--border2) 4px,var(--border2) 8px); }
+.coupon-icon { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; background:var(--bg4); flex-shrink:0; }
+.coupon-info { flex:1; }
+.coupon-brand { font-size:11px; color:var(--text3); font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+.coupon-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:var(--text); margin-top:2px; }
+.coupon-exp { font-size:11px; color:var(--text3); margin-top:3px; }
+.coupon-pts-badge { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:var(--accent); background:rgba(245,166,35,.1); padding:6px 10px; border-radius:8px; white-space:nowrap; }
+
+/* ── CLAN SCREEN ── */
+.clan-hero { margin:16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; }
+.clan-name { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--text); }
+.clan-rank { font-size:12px; color:var(--accent); font-weight:600; margin-top:4px; }
+.clan-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); border-radius:10px; overflow:hidden; margin-top:16px; }
+.clan-stat { background:var(--bg3); padding:12px; text-align:center; }
+.clan-stat-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--text); }
+.clan-stat-label { font-size:10px; color:var(--text3); margin-top:2px; }
+.leaderboard-item { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+.lb-rank { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; width:28px; color:var(--text3); }
+.lb-rank.top { color:var(--accent); }
+.lb-avatar { width:38px; height:38px; border-radius:50%; background:var(--bg3); border:1.5px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:16px; }
+.lb-info { flex:1; }
+.lb-name { font-size:14px; font-weight:600; color:var(--text); }
+.lb-id { font-size:11px; color:var(--text3); }
+.lb-pts { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:var(--accent); }
+
+/* ── PROFILE SCREEN ── */
+.profile-hero { margin:16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:20px; display:flex; align-items:center; gap:16px; }
+.profile-big-avatar { width:64px; height:64px; border-radius:50%; background:var(--bg4); display:flex; align-items:center; justify-content:center; font-size:28px; border:2px solid var(--accent); flex-shrink:0; }
+.profile-info { flex:1; }
+.profile-name { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--text); }
+.profile-drive-id { font-size:12px; color:var(--text3); margin-top:2px; }
+.profile-share-row { display:flex; gap:8px; margin-top:8px; }
+.profile-share-btn { font-size:11px; background:var(--bg4); border:1px solid var(--border); color:var(--text2); padding:5px 12px; border-radius:20px; cursor:pointer; font-weight:500; }
+
+.setting-row { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+.setting-label { font-size:14px; color:var(--text); }
+.setting-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.toggle { width:44px; height:26px; background:var(--bg4); border-radius:13px; border:1.5px solid var(--border2); position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+.toggle.on { background:var(--accent); border-color:var(--accent); }
+.toggle-thumb { position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.3); }
+.toggle.on .toggle-thumb { transform:translateX(18px); }
+
+/* ── DRIVE STATS SCREEN ── */
+.stats-big-card { margin:16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+.stats-speed-display { text-align:center; margin-bottom:20px; }
+.stats-speed-num { font-family:'Syne',sans-serif; font-size:72px; font-weight:800; line-height:1; color:var(--text); }
+.stats-speed-unit { font-size:16px; color:var(--text3); font-weight:400; }
+.stats-limit-row { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
+.stats-limit-badge { background:rgba(248,113,113,.1); border:1.5px solid var(--red); color:var(--red); border-radius:8px; padding:6px 14px; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+.stats-limit-ok { background:rgba(74,222,128,.1); border:1.5px solid var(--green); color:var(--green); border-radius:8px; padding:6px 14px; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.stat-tile { background:var(--bg4); border-radius:10px; padding:14px; }
+.stat-tile-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:var(--text); }
+.stat-tile-label { font-size:11px; color:var(--text3); margin-top:3px; letter-spacing:.3px; }
+.stat-tile-unit { font-size:12px; color:var(--text2); }
+.trip-history-item { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+.trip-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+.trip-info { flex:1; }
+.trip-route { font-size:13px; font-weight:600; color:var(--text); }
+.trip-meta { font-size:11px; color:var(--text3); margin-top:2px; }
+.trip-dist { font-size:13px; font-weight:600; color:var(--accent); }
+
+/* ── ONBOARDING ── */
+#onboarding { position:fixed; inset:0; z-index:500; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; }
+.ob-logo { font-family:'Syne',sans-serif; font-size:36px; font-weight:800; color:var(--text); margin-bottom:4px; }
+.ob-logo span { color:var(--accent); }
+.ob-tagline { font-size:14px; color:var(--text3); margin-bottom:40px; text-align:center; }
+.ob-form { width:100%; max-width:360px; display:flex; flex-direction:column; gap:14px; }
+.ob-input { width:100%; background:var(--bg3); border:1.5px solid var(--border2); border-radius:12px; padding:14px 16px; font-size:15px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; transition:border .2s; }
+.ob-input:focus { border-color:var(--accent); }
+.ob-input::placeholder { color:var(--text3); }
+.ob-btn { width:100%; background:var(--accent); color:#000; border:none; border-radius:12px; padding:16px; font-size:16px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; transition:all .2s; }
+.ob-btn:active { transform:scale(.98); }
+.ob-note { font-size:12px; color:var(--text3); text-align:center; margin-top:8px; }
+.ob-separator { display:flex; align-items:center; gap:12px; }
+.ob-separator hr { flex:1; border:none; border-top:1px solid var(--border); }
+.ob-separator span { font-size:12px; color:var(--text3); }
+.ob-existing-btn { width:100%; background:var(--bg3); color:var(--text); border:1.5px solid var(--border2); border-radius:12px; padding:14px; font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; transition:all .2s; }
+.ob-existing-btn:active { transform:scale(.98); }
+#ob-login-form { display:none; }
+
+/* ── TOAST ── */
+#toast { position:fixed; bottom:calc(var(--tab-h) + 16px); left:50%; transform:translateX(-50%) translateY(20px); background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:10px 20px; font-size:13px; color:var(--text); white-space:nowrap; opacity:0; transition:all .3s; z-index:999; pointer-events:none; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── GPS status ── */
+.gps-badge { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text3); background:var(--bg3); border:1px solid var(--border); padding:4px 10px; border-radius:20px; }
+.gps-dot { width:7px; height:7px; border-radius:50%; background:var(--text3); }
+.gps-dot.active { background:var(--green); animation:pulse 2s infinite; }
+
+/* ── FRIEND NEARBY BANNER ── */
+#friend-banner { position:fixed; top:80px; left:12px; right:12px; z-index:150; background:var(--bg2); border:1px solid var(--accent); border-radius:12px; padding:12px 16px; display:none; align-items:center; gap:12px; box-shadow:0 4px 20px rgba(0,0,0,.5); animation:slideDown .3s ease; }
+@keyframes slideDown { from{transform:translateY(-20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.fb-text { flex:1; font-size:13px; color:var(--text); }
+.fb-text strong { color:var(--accent); }
+.fb-close { font-size:18px; color:var(--text3); cursor:pointer; padding:2px; }
+
+/* misc */
+.divider { height:1px; background:var(--border); margin:0 16px; }
+.empty-state { text-align:center; padding:40px 20px; color:var(--text3); font-size:14px; }
+
+/* ── BACK / HOME NAVIGATION ── */
+.back-btn { width:36px; height:36px; border-radius:50%; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; transition:all .15s; flex-shrink:0; margin-right:4px; }
+.back-btn:active { transform:scale(.92); background:var(--bg4); }
+
+/* Swipe indicator — subtle left-edge hint */
+#swipe-hint { position:fixed; left:0; top:50%; transform:translateY(-50%); width:4px; height:60px; background:linear-gradient(to right, var(--accent), transparent); border-radius:0 4px 4px 0; opacity:0; z-index:90; pointer-events:none; transition:opacity .2s; }
+#swipe-hint.show { opacity:1; }
+
+/* Screen slide animation */
+.screen.slide-in  { animation:slideInRight .28s cubic-bezier(.4,0,.2,1) forwards; }
+.screen.slide-out { animation:slideOutLeft  .28s cubic-bezier(.4,0,.2,1) forwards; }
+.screen.slide-back-in  { animation:slideInLeft  .28s cubic-bezier(.4,0,.2,1) forwards; }
+.screen.slide-back-out { animation:slideOutRight .28s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes slideInRight  { from{transform:translateX(100%);opacity:.4} to{transform:translateX(0);opacity:1} }
+@keyframes slideOutLeft  { from{transform:translateX(0);opacity:1}    to{transform:translateX(-30%);opacity:.2} }
+@keyframes slideInLeft   { from{transform:translateX(-30%);opacity:.2} to{transform:translateX(0);opacity:1} }
+@keyframes slideOutRight { from{transform:translateX(0);opacity:1}    to{transform:translateX(100%);opacity:.4} }
+
+/* ── WALKTHROUGH / COACH MARKS ── */
+#walkthrough { position:fixed; inset:0; z-index:800; pointer-events:none; display:none; }
+#walkthrough.active { display:block; }
+
+/* Dark overlay with cutout via box-shadow */
+#wt-spotlight { position:absolute; border-radius:14px; box-shadow:0 0 0 9999px rgba(0,0,0,.78); transition:all .4s cubic-bezier(.4,0,.2,1); pointer-events:none; z-index:1; }
+
+/* Tooltip card */
+#wt-tooltip { position:absolute; width:260px; background:var(--bg2); border:1.5px solid var(--accent); border-radius:16px; padding:16px 18px 14px; box-shadow:0 8px 40px rgba(0,0,0,.6); z-index:2; pointer-events:all; transition:all .35s cubic-bezier(.4,0,.2,1); }
+#wt-tooltip::before { content:''; position:absolute; width:0; height:0; border:8px solid transparent; }
+#wt-tooltip.arrow-top::before    { border-bottom-color:var(--accent); top:-17px; left:28px; }
+#wt-tooltip.arrow-bottom::before { border-top-color:var(--accent);    bottom:-17px; left:28px; }
+#wt-tooltip.arrow-left::before   { border-right-color:var(--accent);  left:-17px; top:20px; }
+#wt-tooltip.arrow-right::before  { border-left-color:var(--accent);   right:-17px; top:20px; }
+
+.wt-step-label { font-size:10px; font-weight:700; color:var(--accent); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+.wt-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:var(--text); line-height:1.3; margin-bottom:5px; }
+.wt-body  { font-size:13px; color:var(--text2); line-height:1.5; margin-bottom:14px; }
+
+/* Animated arrow */
+.wt-arrow { font-size:22px; position:absolute; animation:wtBounce .7s infinite alternate ease-in-out; }
+@keyframes wtBounce { from{transform:translate(0,0)} to{transform:translate(0,7px)} }
+.wt-arrow.left  { animation-name:wtBounceH; }
+@keyframes wtBounceH { from{transform:translate(0,0)} to{transform:translate(7px,0)} }
+
+.wt-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.wt-progress { display:flex; gap:5px; align-items:center; }
+.wt-dot { width:6px; height:6px; border-radius:50%; background:var(--border2); transition:background .3s; }
+.wt-dot.active { background:var(--accent); width:18px; border-radius:3px; }
+.wt-btn-row { display:flex; gap:8px; }
+.wt-skip { font-size:12px; color:var(--text3); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; padding:2px 0; }
+.wt-next { background:var(--accent); color:#000; border:none; border-radius:9px; padding:9px 20px; font-size:13px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; transition:all .15s; }
+.wt-next:active { transform:scale(.96); }
+
+/* Pulse ring on spotlight */
+#wt-ring { position:absolute; border-radius:50%; border:2px solid var(--accent); opacity:0; pointer-events:none; z-index:1; animation:wtRing 1.6s infinite; }
+@keyframes wtRing { 0%{transform:scale(.85);opacity:.8} 100%{transform:scale(1.4);opacity:0} }
+
+/* ── PARTNER POPUP ── */
+#partner-popup { position:fixed; inset:0; z-index:350; display:none; }
+#partner-popup.open { display:block; }
+.partner-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); }
+.partner-sheet { position:absolute; bottom:0; left:0; right:0; background:var(--bg2); border-radius:24px 24px 0 0; max-height:88vh; overflow-y:auto; animation:sheetUp .3s cubic-bezier(.4,0,.2,1); padding-bottom:env(safe-area-inset-bottom); }
+.partner-sheet::-webkit-scrollbar { display:none; }
+.partner-sheet-handle { width:40px; height:4px; background:var(--border2); border-radius:4px; margin:12px auto 0; }
+
+/* Hero banner */
+.partner-hero { padding:20px 20px 16px; display:flex; align-items:center; gap:16px; border-bottom:1px solid var(--border); }
+.partner-hero-icon { width:56px; height:56px; border-radius:14px; background:var(--bg3); border:1.5px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+.partner-hero-info { flex:1; }
+.partner-hero-name { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--text); }
+.partner-hero-meta { font-size:12px; color:var(--text3); margin-top:3px; }
+.partner-hero-dist { font-size:13px; font-weight:600; color:var(--accent); margin-top:2px; }
+.partner-pts-chip { background:rgba(245,166,35,.12); border:1.5px solid rgba(245,166,35,.3); border-radius:10px; padding:8px 12px; text-align:center; flex-shrink:0; }
+.partner-pts-chip-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--accent); line-height:1; }
+.partner-pts-chip-label { font-size:9px; color:var(--text3); margin-top:2px; letter-spacing:.5px; }
+
+/* Offers */
+.partner-section { padding:16px 20px 0; }
+.partner-section-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; }
+.offer-card { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; display:flex; align-items:center; gap:12px; }
+.offer-badge { flex-shrink:0; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+.offer-badge.green { background:rgba(74,222,128,.1); }
+.offer-badge.amber { background:rgba(245,166,35,.1); }
+.offer-badge.blue  { background:rgba(96,165,250,.1); }
+.offer-badge.red   { background:rgba(248,113,113,.1); }
+.offer-info { flex:1; }
+.offer-title { font-size:14px; font-weight:600; color:var(--text); }
+.offer-sub   { font-size:12px; color:var(--text3); margin-top:2px; }
+.offer-tag   { font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; margin-top:6px; display:inline-block; }
+.offer-tag.hot   { background:rgba(248,113,113,.15); color:var(--red); }
+.offer-tag.new   { background:rgba(96,165,250,.15); color:var(--blue); }
+.offer-tag.driveup { background:rgba(245,166,35,.15); color:var(--accent); }
+
+/* Menu items */
+.menu-scroll { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+.menu-scroll::-webkit-scrollbar { display:none; }
+.menu-item-card { flex-shrink:0; width:110px; background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:12px 10px; text-align:center; cursor:pointer; transition:all .2s; }
+.menu-item-card:active { transform:scale(.96); }
+.menu-item-emoji { font-size:26px; margin-bottom:6px; }
+.menu-item-name { font-size:11px; font-weight:600; color:var(--text); line-height:1.3; }
+.menu-item-price { font-size:12px; color:var(--accent); font-weight:700; margin-top:4px; }
+.menu-item-pts { font-size:10px; color:var(--text3); }
+
+/* Navigate CTA */
+.partner-cta-row { padding:16px 20px 20px; display:flex; gap:10px; }
+.partner-cta-btn { flex:1; background:var(--accent); color:#000; border:none; border-radius:12px; padding:15px; font-size:15px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+.partner-cta-btn:active { transform:scale(.97); }
+.partner-cta-sec { background:var(--bg3); color:var(--text); border:1.5px solid var(--border2); border-radius:12px; padding:15px 18px; font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; white-space:nowrap; transition:all .15s; }
+.partner-cta-sec:active { transform:scale(.97); }
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="ob-logo">Drive<span>Up</span></div>
+  <div class="ob-tagline">Drive more. Earn more. Every route counts.</div>
+  
+  <div class="ob-form" id="ob-register-form">
+    <input class="ob-input" id="ob-name" type="text" placeholder="Your name" autocomplete="name">
+    <input class="ob-input" id="ob-phone" type="tel" placeholder="Phone number" autocomplete="tel">
+    <button class="ob-btn" onclick="registerUser()">Create Account →</button>
+    <div class="ob-note">Your DriveUp ID will be generated automatically</div>
+    <div class="ob-separator"><hr><span>already have an account?</span><hr></div>
+    <button class="ob-existing-btn" onclick="showLoginForm()">Sign In with ID</button>
+  </div>
+
+  <div class="ob-form" id="ob-login-form">
+    <input class="ob-input" id="ob-login-id" type="text" placeholder="Enter DriveUp ID (e.g. DU-48291)" autocomplete="off">
+    <button class="ob-btn" onclick="loginUser()">Sign In →</button>
+    <button class="ob-existing-btn" onclick="showRegisterForm()">← Back to Register</button>
+  </div>
+</div>
+
+<!-- FRIEND NEARBY BANNER -->
+<div id="friend-banner">
+  <span style="font-size:20px;">👋</span>
+  <div class="fb-text"><strong id="fb-name">Arjun</strong> is nearby · <span id="fb-dist">1.2 km</span> away</div>
+  <span class="fb-close" onclick="document.getElementById('friend-banner').style.display='none'">✕</span>
+</div>
+
+<!-- SWIPE HINT -->
+<div id="swipe-hint"></div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
+  <!-- SCREENS -->
+  <div id="screens">
+
+    <!-- HOME -->
+    <div class="screen active" id="screen-home">
+      <div class="header">
+        <div class="header-left">
+          <div class="header-greeting">Good morning,</div>
+          <div class="header-name" onclick="openProfilePopup()">
+            <span id="hdr-name">Ravi</span> 👋
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="gps-badge"><div class="gps-dot" id="gps-dot"></div><span id="gps-label">GPS</span></div>
+          <div class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span id="theme-icon">☀️</span>
+          </div>
+          <div id="map-circle-wrap" onclick="openMap()">
+            <div id="map-circle">
+              <canvas id="mini-map-canvas" width="68" height="68"></canvas>
+              <div class="map-live-dot"></div>
+            </div>
+            <div class="map-expand-hint">tap to expand</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speed limit on dashboard -->
+      <div style="padding:10px 16px 2px; display:flex; align-items:center; gap:10px;">
+        <div id="speed-indicator" class="speed-badge">
+          <div class="speed-val" id="current-speed">0</div>
+          <div class="speed-label">KM/H</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">Speed Limit Zone</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div style="font-size:13px; font-weight:600; color:var(--text);" id="speed-zone-label">⬟ 60 km/h limit</div>
+            <div style="font-size:11px; padding:2px 8px; border-radius:10px; background:rgba(74,222,128,.12); color:var(--green); font-weight:600;" id="speed-status-pill">OK</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px; color:var(--text3);">Today</div>
+          <div style="font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:var(--text);" id="dash-dist">0 km</div>
+        </div>
+      </div>
+
+      <!-- Daily Mission Hero -->
+      <div style="padding:12px 0 6px; font-family:'Syne',sans-serif; font-size:13px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase; padding-left:16px;">Daily Mission</div>
+      <div class="mission-hero">
+        <div class="mission-tag">🔥 Featured · 2h left</div>
+        <div class="mission-hero-title">Fill up at Indian Oil, KPHB</div>
+        <div class="mission-hero-sub">Complete fuelling & verify UPI payment</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:65%"></div></div>
+        <div class="mission-meta">
+          <div class="mission-pts">160 <span>DrivePoints</span></div>
+          <button class="mission-cta" onclick="showToast('Mission started! Navigate to Indian Oil, KPHB')">Start →</button>
+        </div>
+      </div>
+
+      <!-- Quick Tasks -->
+      <div style="padding:14px 0 8px; font-family:'Syne',sans-serif; font-size:13px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase; padding-left:16px;">Quick Tasks</div>
+      <div class="quick-tasks">
+        <div class="quick-card" onclick="showToast('CCD task selected')">
+          <div class="quick-card-icon">☕</div>
+          <div class="quick-card-name">Café Coffee Day</div>
+          <div class="quick-card-dist">📍 1.2 km</div>
+          <div class="quick-card-bar"><div class="quick-card-fill" style="width:30%"></div></div>
+          <div class="quick-card-pts">+60 pts</div>
+        </div>
+        <div class="quick-card" onclick="showToast('Dominos task selected')">
+          <div class="quick-card-icon">🍕</div>
+          <div class="quick-card-name">Domino's</div>
+          <div class="quick-card-dist">📍 2.5 km</div>
+          <div class="quick-card-bar"><div class="quick-card-fill" style="width:0%"></div></div>
+          <div class="quick-card-pts">+80 pts</div>
+        </div>
+        <div class="quick-card" onclick="showToast('3M Auto task selected')">
+          <div class="quick-card-icon">🚗</div>
+          <div class="quick-card-name">3M Auto Care</div>
+          <div class="quick-card-dist">📍 3.8 km</div>
+          <div class="quick-card-bar"><div class="quick-card-fill" style="width:0%"></div></div>
+          <div class="quick-card-pts">+120 pts</div>
+        </div>
+        <div class="quick-card" onclick="showToast('HPCL task selected')">
+          <div class="quick-card-icon">⛽</div>
+          <div class="quick-card-name">HPCL Pump</div>
+          <div class="quick-card-dist">📍 0.9 km</div>
+          <div class="quick-card-bar"><div class="quick-card-fill" style="width:0%"></div></div>
+          <div class="quick-card-pts">+90 pts</div>
+        </div>
+        <div class="quick-card" onclick="showToast('Exppress Car Wash task selected')">
+          <div class="quick-card-icon">🫧</div>
+          <div class="quick-card-name">Exppress Wash</div>
+          <div class="quick-card-dist">📍 4.1 km</div>
+          <div class="quick-card-bar"><div class="quick-card-fill" style="width:0%"></div></div>
+          <div class="quick-card-pts">+50 pts</div>
+        </div>
+      </div>
+
+      <!-- Friends Nearby -->
+      <div class="section">
+        <div class="section-title">Friends Nearby <a onclick="switchTab('clan')">View Clan →</a></div>
+        <div class="friend-alert">
+          <span class="friend-alert-icon">📡</span>
+          <span>3 friends are sharing location with you right now</span>
+        </div>
+        <div class="friends-list" id="friends-list">
+          <div class="friend-row" onclick="showToast('View Arjun\'s profile')">
+            <div class="friend-avatar">🧑<div class="friend-online"></div></div>
+            <div class="friend-info">
+              <div class="friend-name">Arjun</div>
+              <div class="friend-id">DU-48291</div>
+            </div>
+            <div class="friend-dist">1.2 km</div>
+          </div>
+          <div class="friend-row" onclick="showToast('View Priya\'s profile')">
+            <div class="friend-avatar">👩<div class="friend-online"></div></div>
+            <div class="friend-info">
+              <div class="friend-name">Priya</div>
+              <div class="friend-id">DU-77341</div>
+            </div>
+            <div class="friend-dist">3.4 km</div>
+          </div>
+          <div class="friend-row" onclick="showToast('View Karthik\'s profile')">
+            <div class="friend-avatar">🧔</div>
+            <div class="friend-info">
+              <div class="friend-name">Karthik</div>
+              <div class="friend-id">DU-51029</div>
+            </div>
+            <div class="friend-dist">5.8 km</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partner Stores -->
+      <div class="section" style="padding-top:0;">
+        <div class="section-title">Partner Stores Near You</div>
+        <div class="stores-list">
+          <div class="store-card" onclick="showToast('Navigate to Indian Oil')">
+            <div class="store-icon">⛽</div>
+            <div class="store-name">Indian Oil</div>
+            <div class="store-dist">0.8 km</div>
+            <div class="store-pts">+160 pts</div>
+          </div>
+          <div class="store-card" onclick="showToast('Navigate to HPCL')">
+            <div class="store-icon">⛽</div>
+            <div class="store-name">HPCL</div>
+            <div class="store-dist">0.9 km</div>
+            <div class="store-pts">+90 pts</div>
+          </div>
+          <div class="store-card" onclick="showToast('Navigate to CCD')">
+            <div class="store-icon">☕</div>
+            <div class="store-name">CCD</div>
+            <div class="store-dist">1.2 km</div>
+            <div class="store-pts">+60 pts</div>
+          </div>
+          <div class="store-card" onclick="showToast('Navigate to Dominos')">
+            <div class="store-icon">🍕</div>
+            <div class="store-name">Domino's</div>
+            <div class="store-dist">2.5 km</div>
+            <div class="store-pts">+80 pts</div>
+          </div>
+          <div class="store-card" onclick="showToast('Navigate to BPCL')">
+            <div class="store-icon">⛽</div>
+            <div class="store-name">BPCL</div>
+            <div class="store-dist">3.1 km</div>
+            <div class="store-pts">+90 pts</div>
+          </div>
+          <div class="store-card" onclick="showToast('Navigate to 3M Auto')">
+            <div class="store-icon">🚗</div>
+            <div class="store-name">3M Auto</div>
+            <div class="store-dist">3.8 km</div>
+            <div class="store-pts">+120 pts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MISSIONS -->
+    <div class="screen" id="screen-missions">
+      <div class="header">
+        <div class="header-left" style="flex-direction:row; align-items:center; gap:8px;">
+          <div class="back-btn" onclick="goHome()" title="Back to Home">←</div>
+          <div>
+            <div class="header-greeting">Today's</div>
+            <div class="header-name" style="cursor:default;">Missions</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div style="font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--accent); background:rgba(245,166,35,.1); padding:6px 14px; border-radius:20px;">2/5 Done</div>
+        </div>
+      </div>
+      <div class="missions-filter">
+        <div class="filter-pill active" onclick="filterMissions(this,'all')">All</div>
+        <div class="filter-pill" onclick="filterMissions(this,'fuel')">⛽ Fuel</div>
+        <div class="filter-pill" onclick="filterMissions(this,'food')">🍕 Food</div>
+        <div class="filter-pill" onclick="filterMissions(this,'auto')">🚗 Auto</div>
+        <div class="filter-pill" onclick="filterMissions(this,'streak')">🔥 Streak</div>
+      </div>
+      <div id="missions-list">
+        <div class="missions-card">
+          <div class="missions-card-header">
+            <div><div class="missions-card-brand">⛽ Indian Oil</div><div class="missions-card-title">Fill up at KPHB Outlet</div></div>
+            <div class="missions-badge hot">🔥 Hot</div>
+          </div>
+          <div style="font-size:12px; color:var(--text3);">Verify UPI · Min ₹500</div>
+          <div class="missions-card-bar-row">
+            <div class="missions-card-bar-wrap"><div class="missions-card-bar-fill" style="width:65%"></div></div>
+            <div class="missions-card-pts">+160 pts</div>
+          </div>
+        </div>
+        <div class="missions-card">
+          <div class="missions-card-header">
+            <div><div class="missions-card-brand">☕ CCD</div><div class="missions-card-title">Morning Coffee Run</div></div>
+            <div class="missions-badge done">✓ Done</div>
+          </div>
+          <div style="font-size:12px; color:var(--text3);">Order any beverage · UPI verified</div>
+          <div class="missions-card-bar-row">
+            <div class="missions-card-bar-wrap"><div class="missions-card-bar-fill" style="width:100%"></div></div>
+            <div class="missions-card-pts">+60 pts</div>
+          </div>
+        </div>
+        <div class="missions-card">
+          <div class="missions-card-header">
+            <div><div class="missions-card-brand">🍕 Domino's</div><div class="missions-card-title">Lunch Delivery Drive</div></div>
+            <div class="missions-badge">📍 2.5 km</div>
+          </div>
+          <div style="font-size:12px; color:var(--text3);">Order min ₹300 · UPI</div>
+          <div class="missions-card-bar-row">
+            <div class="missions-card-bar-wrap"><div class="missions-card-bar-fill" style="width:0%"></div></div>
+            <div class="missions-card-pts">+80 pts</div>
+          </div>
+        </div>
+        <div class="missions-card">
+          <div class="missions-card-header">
+            <div><div class="missions-card-brand">🚗 3M Auto</div><div class="missions-card-title">Car Care Service</div></div>
+            <div class="missions-badge">💎 Premium</div>
+          </div>
+          <div style="font-size:12px; color:var(--text3);">Any detailing service · Min ₹1000</div>
+          <div class="missions-card-bar-row">
+            <div class="missions-card-bar-wrap"><div class="missions-card-bar-fill" style="width:0%"></div></div>
+            <div class="missions-card-pts">+120 pts</div>
+          </div>
+        </div>
+        <div class="missions-card">
+          <div class="missions-card-header">
+            <div><div class="missions-card-brand">🔥 Streak</div><div class="missions-card-title">5-Day Drive Streak</div></div>
+            <div class="missions-badge hot">Day 4</div>
+          </div>
+          <div style="font-size:12px; color:var(--text3);">Drive 10+ km today to keep streak</div>
+          <div class="missions-card-bar-row">
+            <div class="missions-card-bar-wrap"><div class="missions-card-bar-fill" style="width:80%"></div></div>
+            <div class="missions-card-pts">+200 pts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="screen" id="screen-rewards">
+      <div class="header">
+        <div class="header-left" style="flex-direction:row; align-items:center; gap:8px;">
+          <div class="back-btn" onclick="goHome()">←</div>
+          <div>
+            <div class="header-greeting">Your</div>
+            <div class="header-name" style="cursor:default;">Rewards</div>
+          </div>
+        </div>
+      </div>
+      <div class="rewards-header">
+        <div class="rewards-total" id="rewards-total">1,240</div>
+        <div class="rewards-total-label">DrivePoints available</div>
+        <div class="rewards-actions">
+          <button class="rewards-action-btn" onclick="showToast('Points history coming soon')">History</button>
+          <button class="rewards-action-btn primary" onclick="showToast('Redeem points for coupons')">Redeem Points</button>
+        </div>
+      </div>
+      <div class="divider" style="margin:4px 16px 16px;"></div>
+      <div style="padding:0 16px 10px; font-family:'Syne',sans-serif; font-size:13px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase;">Your Coupons</div>
+      <div class="coupon-card" onclick="showToast('View coupon: CCD 20% off')">
+        <div class="coupon-icon">☕</div>
+        <div class="coupon-info">
+          <div class="coupon-brand">Café Coffee Day</div>
+          <div class="coupon-title">20% off any order</div>
+          <div class="coupon-exp">Expires in 3 days</div>
+        </div>
+        <div class="coupon-pts-badge">200 pts</div>
+      </div>
+      <div class="coupon-card" onclick="showToast('View coupon: HPCL ₹50 off')">
+        <div class="coupon-icon">⛽</div>
+        <div class="coupon-info">
+          <div class="coupon-brand">HPCL</div>
+          <div class="coupon-title">₹50 off on fuel</div>
+          <div class="coupon-exp">Expires in 7 days</div>
+        </div>
+        <div class="coupon-pts-badge">350 pts</div>
+      </div>
+      <div class="coupon-card" onclick="showToast('View coupon: Dominos free delivery')">
+        <div class="coupon-icon">🍕</div>
+        <div class="coupon-info">
+          <div class="coupon-brand">Domino's</div>
+          <div class="coupon-title">Free delivery + ₹30 off</div>
+          <div class="coupon-exp">Expires in 14 days</div>
+        </div>
+        <div class="coupon-pts-badge">280 pts</div>
+      </div>
+      <div style="padding:16px 16px 8px; font-family:'Syne',sans-serif; font-size:13px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase;">Available to Redeem</div>
+      <div class="coupon-card" onclick="showToast('Redeem: 3M Auto ₹150 off')">
+        <div class="coupon-icon">🚗</div>
+        <div class="coupon-info">
+          <div class="coupon-brand">3M Auto Care</div>
+          <div class="coupon-title">₹150 off any detailing</div>
+          <div class="coupon-exp">Needs 400 pts</div>
+        </div>
+        <div class="coupon-pts-badge" style="color:var(--text3); background:var(--bg4);">400 pts</div>
+      </div>
+      <div class="coupon-card" onclick="showToast('Redeem: Indian Oil ₹100 off')">
+        <div class="coupon-icon">⛽</div>
+        <div class="coupon-info">
+          <div class="coupon-brand">Indian Oil</div>
+          <div class="coupon-title">₹100 off next fuel</div>
+          <div class="coupon-exp">Needs 500 pts</div>
+        </div>
+        <div class="coupon-pts-badge" style="color:var(--text3); background:var(--bg4);">500 pts</div>
+      </div>
+    </div>
+
+    <!-- CLAN -->
+    <div class="screen" id="screen-clan">
+      <div class="header">
+        <div class="header-left" style="flex-direction:row; align-items:center; gap:8px;">
+          <div class="back-btn" onclick="goHome()">←</div>
+          <div>
+            <div class="header-greeting">Your</div>
+            <div class="header-name" style="cursor:default;">Clan</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <button style="background:var(--accent); color:#000; border:none; border-radius:8px; padding:8px 14px; font-size:12px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer;" onclick="showToast('Map view: Clan members shown on map')">Map View</button>
+        </div>
+      </div>
+      <div class="clan-hero">
+        <div class="clan-name">🏎️ Hyderabad Rollers</div>
+        <div class="clan-rank">#3 in Hyderabad · Season 4</div>
+        <div class="clan-stats-row">
+          <div class="clan-stat"><div class="clan-stat-val">12</div><div class="clan-stat-label">Members</div></div>
+          <div class="clan-stat"><div class="clan-stat-val">18.4k</div><div class="clan-stat-label">Total Pts</div></div>
+          <div class="clan-stat"><div class="clan-stat-val">24</div><div class="clan-stat-label">Missions</div></div>
+        </div>
+      </div>
+      <div style="padding:12px 16px 8px; font-family:'Syne',sans-serif; font-size:13px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+        Leaderboard
+        <div style="display:flex; gap:6px;">
+          <div class="filter-pill active" style="font-size:11px; padding:4px 10px;" onclick="showToast('Filter: Friends on map')">Friends</div>
+          <div class="filter-pill" style="font-size:11px; padding:4px 10px;" onclick="showToast('Filter: Clan members on map')">Clan</div>
+        </div>
+      </div>
+      <div id="leaderboard">
+        <div class="leaderboard-item">
+          <div class="lb-rank top">1</div>
+          <div class="lb-avatar">🏆</div>
+          <div class="lb-info"><div class="lb-name">Ravi S.</div><div class="lb-id" id="lb-my-id">DU-XXXXX</div></div>
+          <div class="lb-pts">3,240</div>
+        </div>
+        <div class="leaderboard-item">
+          <div class="lb-rank top">2</div>
+          <div class="lb-avatar">🧑</div>
+          <div class="lb-info"><div class="lb-name">Arjun</div><div class="lb-id">DU-48291</div></div>
+          <div class="lb-pts">2,980</div>
+        </div>
+        <div class="leaderboard-item">
+          <div class="lb-rank top">3</div>
+          <div class="lb-avatar">👩</div>
+          <div class="lb-info"><div class="lb-name">Priya</div><div class="lb-id">DU-77341</div></div>
+          <div class="lb-pts">2,540</div>
+        </div>
+        <div class="leaderboard-item">
+          <div class="lb-rank">4</div>
+          <div class="lb-avatar">🧔</div>
+          <div class="lb-info"><div class="lb-name">Karthik</div><div class="lb-id">DU-51029</div></div>
+          <div class="lb-pts">2,180</div>
+        </div>
+        <div class="leaderboard-item">
+          <div class="lb-rank">5</div>
+          <div class="lb-avatar">👨</div>
+          <div class="lb-info"><div class="lb-name">Suresh</div><div class="lb-id">DU-29847</div></div>
+          <div class="lb-pts">1,920</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DRIVE STATS -->
+    <div class="screen" id="screen-stats">
+      <div class="header">
+        <div class="header-left" style="flex-direction:row; align-items:center; gap:8px;">
+          <div class="back-btn" onclick="goHome()">←</div>
+          <div>
+            <div class="header-greeting">Live</div>
+            <div class="header-name" style="cursor:default;">Drive Stats</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="gps-badge"><div class="gps-dot" id="gps-dot2"></div><span id="gps-label2">GPS</span></div>
+        </div>
+      </div>
+      <div class="stats-big-card">
+        <div class="stats-speed-display">
+          <div style="font-size:12px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Current Speed</div>
+          <div class="stats-speed-num"><span id="stats-speed">0</span><span class="stats-speed-unit"> km/h</span></div>
+          <div class="stats-limit-row">
+            <div style="font-size:12px; color:var(--text3);">Limit: 60 km/h</div>
+            <div class="stats-limit-ok" id="stats-limit-status">✓ Within Limit</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-tile">
+            <div class="stat-tile-val" id="stats-dist">0.0</div>
+            <div class="stat-tile-unit">km</div>
+            <div class="stat-tile-label">TODAY'S DISTANCE</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile-val" id="stats-time">00:00</div>
+            <div class="stat-tile-label">DRIVE TIME</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile-val" id="stats-avg">0.0</div>
+            <div class="stat-tile-unit">km/h avg</div>
+            <div class="stat-tile-label">AVG SPEED</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile-val" id="stats-co2">0.0</div>
+            <div class="stat-tile-unit">kg CO₂</div>
+            <div class="stat-tile-label">EMISSIONS</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 16px 8px; font-family:'Syne',sans-serif; font-size:13px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase;">Today's Trips</div>
+      <div id="trips-list">
+        <div class="trip-history-item">
+          <div class="trip-dot"></div>
+          <div class="trip-info">
+            <div class="trip-route">Home → Indian Oil, KPHB</div>
+            <div class="trip-meta">9:24 AM · 12 min · +160 pts</div>
+          </div>
+          <div class="trip-dist">4.2 km</div>
+        </div>
+        <div class="trip-history-item">
+          <div class="trip-dot"></div>
+          <div class="trip-info">
+            <div class="trip-route">KPHB → CCD, Jubilee Hills</div>
+            <div class="trip-meta">10:15 AM · 18 min · +60 pts</div>
+          </div>
+          <div class="trip-dist">6.8 km</div>
+        </div>
+        <div class="empty-state" id="trips-empty" style="display:none;">Start driving to see live trip data</div>
+      </div>
+    </div>
+
+    <!-- PROFILE SCREEN -->
+    <div class="screen" id="screen-profile">
+      <div class="header">
+        <div class="header-left" style="flex-direction:row; align-items:center; gap:8px;">
+          <div class="back-btn" onclick="goHome()">←</div>
+          <div>
+            <div class="header-greeting">Your</div>
+            <div class="header-name" style="cursor:default;">Profile</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="theme-btn" onclick="toggleTheme()"><span id="theme-icon2">☀️</span></div>
+        </div>
+      </div>
+      <div class="profile-hero">
+        <div class="profile-big-avatar">🧑</div>
+        <div class="profile-info">
+          <div class="profile-name" id="prof-name">Ravi</div>
+          <div class="profile-drive-id" id="prof-id">DriveUp ID: DU-XXXXX</div>
+          <div class="profile-share-row">
+            <button class="profile-share-btn" onclick="shareUserId()">📋 Copy ID</button>
+            <button class="profile-share-btn" onclick="shareProfile()">🔗 Share</button>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="padding:14px 16px 8px; font-family:'Syne',sans-serif; font-size:12px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase;">Privacy & Location</div>
+      <div class="setting-row" onclick="toggleSetting('show-location')">
+        <div><div class="setting-label">Show my location</div><div class="setting-sub">Let friends see you on map</div></div>
+        <div class="toggle" id="toggle-show-location"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="setting-row" onclick="toggleSetting('show-clan')">
+        <div><div class="setting-label">Show in Clan map</div><div class="setting-sub">Visible to clan members</div></div>
+        <div class="toggle" id="toggle-show-clan"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="setting-row" onclick="toggleSetting('gps-tracking')">
+        <div><div class="setting-label">Live GPS Tracking</div><div class="setting-sub">Enable for missions & stats</div></div>
+        <div class="toggle on" id="toggle-gps-tracking"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="divider"></div>
+      <div style="padding:14px 16px 8px; font-family:'Syne',sans-serif; font-size:12px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase;">Notifications</div>
+      <div class="setting-row" onclick="toggleSetting('friend-notif')">
+        <div><div class="setting-label">Friend nearby alerts</div><div class="setting-sub">Notify when a friend is within 2 km</div></div>
+        <div class="toggle on" id="toggle-friend-notif"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="setting-row" onclick="toggleSetting('mission-notif')">
+        <div><div class="setting-label">Mission reminders</div><div class="setting-sub">Daily mission push alerts</div></div>
+        <div class="toggle on" id="toggle-mission-notif"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="divider"></div>
+      <div style="padding:14px 16px 8px; font-family:'Syne',sans-serif; font-size:12px; font-weight:600; color:var(--text3); letter-spacing:1px; text-transform:uppercase;">Account</div>
+      <div class="setting-row" onclick="showToast('Subscription: DriveUp Free')">
+        <div><div class="setting-label">Subscription</div><div class="setting-sub">DriveUp Free</div></div>
+        <div style="font-size:12px; color:var(--accent); font-weight:600;">Upgrade ₹99/mo →</div>
+      </div>
+      <div class="setting-row" onclick="logOut()">
+        <div><div class="setting-label" style="color:var(--red);">Sign Out</div></div>
+        <div style="font-size:16px;">→</div>
+      </div>
+      <div style="height:20px;"></div>
+    </div>
+
+  </div><!-- end screens -->
+
+  <!-- TAB BAR -->
+  <div id="tab-bar">
+    <div class="tab-btn active" id="tab-home" onclick="switchTab('home')">
+      <div class="tab-indicator"></div>
+      <div class="tab-icon">🏠</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-btn" id="tab-missions" onclick="switchTab('missions')">
+      <div class="tab-indicator"></div>
+      <div class="tab-icon">🎯</div>
+      <div class="tab-label">Missions</div>
+      <div class="tab-notif"></div>
+    </div>
+    <div class="tab-btn" id="tab-rewards" onclick="switchTab('rewards')">
+      <div class="tab-indicator"></div>
+      <div class="tab-icon">🎁</div>
+      <div class="tab-label">Rewards</div>
+    </div>
+    <div class="tab-btn" id="tab-clan" onclick="switchTab('clan')">
+      <div class="tab-indicator"></div>
+      <div class="tab-icon">👥</div>
+      <div class="tab-label">Clan</div>
+    </div>
+    <div class="tab-btn" id="tab-stats" onclick="switchTab('stats')">
+      <div class="tab-indicator"></div>
+      <div class="tab-icon">🚗</div>
+      <div class="tab-label">Drive</div>
+    </div>
+    <div class="tab-btn" id="tab-profile" onclick="switchTab('profile')">
+      <div class="tab-indicator"></div>
+      <div class="tab-icon">👤</div>
+      <div class="tab-label">Profile</div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<!-- FULL SCREEN MAP -->
+<div id="map-fullscreen">
+  <div class="map-fs-header">
+    <div class="map-fs-title">📍 Live Map — Hyderabad</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div class="gps-badge"><div class="gps-dot active"></div><span>Live</span></div>
+      <div class="close-map-btn" onclick="closeMap()">✕</div>
+    </div>
+  </div>
+  <div class="map-fs-filters">
+    <div class="filter-pill active" onclick="setMapFilter(this,'all')">All</div>
+    <div class="filter-pill" onclick="setMapFilter(this,'fuel')">⛽ Fuel</div>
+    <div class="filter-pill" onclick="setMapFilter(this,'food')">🍕 Food</div>
+    <div class="filter-pill" onclick="setMapFilter(this,'auto')">🚗 Auto</div>
+    <div class="filter-pill" onclick="setMapFilter(this,'friends')">👥 Friends</div>
+    <div class="filter-pill" onclick="setMapFilter(this,'clan')">🏎️ Clan</div>
+  </div>
+  <div id="map-canvas-full">
+    <canvas id="full-map-canvas"></canvas>
+  </div>
+</div>
+
+<!-- PROFILE POPUP -->
+<div id="profile-popup">
+  <div class="popup-backdrop" onclick="closeProfilePopup()"></div>
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="popup-user-row">
+      <div class="popup-avatar">🧑</div>
+      <div class="popup-user-info">
+        <div class="popup-display-name" id="popup-name">Ravi</div>
+        <div class="popup-id-row">
+          <div class="popup-drive-id" id="popup-id">DU-XXXXX</div>
+          <button class="popup-share-btn" onclick="shareUserId()">Copy ID</button>
+        </div>
+      </div>
+    </div>
+    <div class="popup-stats-row">
+      <div class="popup-stat"><div class="popup-stat-val" id="popup-pts">1,240</div><div class="popup-stat-label">POINTS</div></div>
+      <div class="popup-stat"><div class="popup-stat-val">4</div><div class="popup-stat-label">STREAK</div></div>
+      <div class="popup-stat"><div class="popup-stat-val">3</div><div class="popup-stat-label">COUPONS</div></div>
+    </div>
+    <div class="popup-section-title">Recent Routes</div>
+    <div class="route-item">
+      <div class="route-dot"></div>
+      <div class="route-info"><div class="route-name">Home → Indian Oil, KPHB</div><div class="route-meta">Today · 4.2 km · 12 min</div></div>
+      <div class="route-pts">+160</div>
+    </div>
+    <div class="route-item">
+      <div class="route-dot"></div>
+      <div class="route-info"><div class="route-name">KPHB → CCD, Jubilee Hills</div><div class="route-meta">Today · 6.8 km · 18 min</div></div>
+      <div class="route-pts">+60</div>
+    </div>
+    <div class="route-item">
+      <div class="route-dot"></div>
+      <div class="route-info"><div class="route-name">Home → Domino's, Kondapur</div><div class="route-meta">Yesterday · 5.1 km · 14 min</div></div>
+      <div class="route-pts">+80</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- WALKTHROUGH -->
+<div id="walkthrough">
+  <div id="wt-spotlight"></div>
+  <div id="wt-ring"></div>
+  <div id="wt-tooltip">
+    <div class="wt-step-label" id="wt-step-label">Step 1 of 7</div>
+    <div class="wt-title"    id="wt-title">Welcome to DriveUp 🚗</div>
+    <div class="wt-body"     id="wt-body">Let's take a quick tour of the app.</div>
+    <div class="wt-row">
+      <div class="wt-progress" id="wt-progress"></div>
+      <div class="wt-btn-row">
+        <button class="wt-skip" onclick="skipWalkthrough()">Skip</button>
+        <button class="wt-next" id="wt-next-btn" onclick="wtNext()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PARTNER POPUP -->
+<div id="partner-popup">
+  <div class="partner-backdrop" onclick="closePartnerPopup()"></div>
+  <div class="partner-sheet">
+    <div class="partner-sheet-handle"></div>
+    <div class="partner-hero">
+      <div class="partner-hero-icon" id="pp-icon">⛽</div>
+      <div class="partner-hero-info">
+        <div class="partner-hero-name" id="pp-name">Indian Oil</div>
+        <div class="partner-hero-meta" id="pp-meta">Fuel · Open now · 8AM–10PM</div>
+        <div class="partner-hero-dist" id="pp-dist">📍 0.8 km away</div>
+      </div>
+      <div class="partner-pts-chip">
+        <div class="partner-pts-chip-val" id="pp-pts">160</div>
+        <div class="partner-pts-chip-label">POINTS</div>
+      </div>
+    </div>
+    <div class="partner-section">
+      <div class="partner-section-title">🏷 Live Offers</div>
+      <div id="pp-offers"></div>
+    </div>
+    <div class="partner-section" id="pp-menu-section">
+      <div class="partner-section-title">📋 Menu Highlights</div>
+      <div class="menu-scroll" id="pp-menu"></div>
+    </div>
+    <div class="partner-cta-row">
+      <button class="partner-cta-btn" onclick="navigateToPartner()">
+        <span>🧭</span><span>Navigate</span>
+      </button>
+      <button class="partner-cta-sec" onclick="startPartnerMission()">Start Mission</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let userData = null;
+let isDark = true;
+let currentTab = 'home';
+let mapFilter = 'all';
+let gpsActive = false;
+let watchId = null;
+let driveStats = { dist: 0, time: 0, avgSpeed: 0, lastPos: null, startTime: null };
+let miniMapAnim = null;
+let fullMapAnim = null;
+let mapOpen = false;
+let friendBannerShown = false;
+let activePartner = null;
+
+// ── PARTNER DATABASE ────────────────────────────────────
+const PARTNER_DATA = {
+  'Indian Oil': {
+    icon:'⛽', type:'fuel', dist:'0.8 km', pts:160, hours:'8AM–10PM',
+    offers:[
+      { emoji:'💰', title:'₹5/L cashback on UPI', sub:'Min 10L fill-up · Valid today', tag:'DriveUp Exclusive', tagClass:'driveup', badgeClass:'amber' },
+      { emoji:'🎁', title:'Free air & water check', sub:'With any fuel purchase', tag:'New', tagClass:'new', badgeClass:'blue' },
+      { emoji:'🔥', title:'Double Points Friday', sub:'2x DrivePoints today only', tag:'Hot', tagClass:'hot', badgeClass:'red' },
+    ],
+    menu:[
+      { emoji:'⛽', name:'Petrol', price:'₹103/L', pts:'+160 pts' },
+      { emoji:'🛢', name:'Diesel', price:'₹90/L', pts:'+140 pts' },
+      { emoji:'💨', name:'CNG', price:'₹75/Kg', pts:'+100 pts' },
+      { emoji:'🛞', name:'Tyre Check', price:'Free', pts:'+20 pts' },
+      { emoji:'🧴', name:'Lubricant', price:'₹499', pts:'+60 pts' },
+    ]
+  },
+  'HPCL': {
+    icon:'⛽', type:'fuel', dist:'0.9 km', pts:90, hours:'7AM–11PM',
+    offers:[
+      { emoji:'💳', title:'₹50 off via HPCL card', sub:'On fuel above ₹500', tag:'DriveUp Exclusive', tagClass:'driveup', badgeClass:'amber' },
+      { emoji:'🚘', title:'Free vehicle wash', sub:'Sundays only · 9AM–12PM', tag:'New', tagClass:'new', badgeClass:'blue' },
+    ],
+    menu:[
+      { emoji:'⛽', name:'Petrol', price:'₹103/L', pts:'+90 pts' },
+      { emoji:'🛢', name:'Diesel', price:'₹90/L', pts:'+80 pts' },
+      { emoji:'💨', name:'CNG', price:'₹74/Kg', pts:'+70 pts' },
+      { emoji:'🧽', name:'Car Wash', price:'₹99', pts:'+30 pts' },
+    ]
+  },
+  'BPCL': {
+    icon:'⛽', type:'fuel', dist:'3.1 km', pts:90, hours:'Open 24h',
+    offers:[
+      { emoji:'🏆', title:'Loyalty bonus this week', sub:'+50 bonus pts on every fill', tag:'Hot', tagClass:'hot', badgeClass:'red' },
+      { emoji:'💰', title:'₹3/L off on HP Pay', sub:'Any fuel · Min ₹300', tag:'DriveUp Exclusive', tagClass:'driveup', badgeClass:'amber' },
+    ],
+    menu:[
+      { emoji:'⛽', name:'Petrol', price:'₹103/L', pts:'+90 pts' },
+      { emoji:'🛢', name:'Diesel', price:'₹90/L', pts:'+80 pts' },
+      { emoji:'🧴', name:'Speed Lubricant', price:'₹599', pts:'+70 pts' },
+    ]
+  },
+  'CCD': {
+    icon:'☕', type:'food', dist:'1.2 km', pts:60, hours:'8AM–11PM',
+    offers:[
+      { emoji:'☕', title:'Buy 1 Get 1 Free', sub:'On all cold coffees · Mon–Wed', tag:'Hot', tagClass:'hot', badgeClass:'red' },
+      { emoji:'🎯', title:'20% off via DriveUp', sub:'Show your DriveUp ID at counter', tag:'DriveUp Exclusive', tagClass:'driveup', badgeClass:'amber' },
+      { emoji:'🥐', title:'Free croissant', sub:'With any Large beverage', tag:'New', tagClass:'new', badgeClass:'blue' },
+    ],
+    menu:[
+      { emoji:'☕', name:'Cappuccino', price:'₹180', pts:'+20 pts' },
+      { emoji:'🧊', name:'Cold Coffee', price:'₹210', pts:'+25 pts' },
+      { emoji:'🥤', name:'Frappe', price:'₹250', pts:'+30 pts' },
+      { emoji:'🥐', name:'Croissant', price:'₹120', pts:'+15 pts' },
+      { emoji:'🍰', name:'Pastry', price:'₹150', pts:'+15 pts' },
+      { emoji:'🫖', name:'Tea', price:'₹80', pts:'+10 pts' },
+    ]
+  },
+  "Domino's": {
+    icon:'🍕', type:'food', dist:'2.5 km', pts:80, hours:'11AM–12AM',
+    offers:[
+      { emoji:'🚚', title:'Free delivery via DriveUp', sub:'On orders above ₹299', tag:'DriveUp Exclusive', tagClass:'driveup', badgeClass:'amber' },
+      { emoji:'🍕', title:'₹100 off on ₹499+', sub:'Use code DRIVEUP100', tag:'Hot', tagClass:'hot', badgeClass:'red' },
+      { emoji:'🎁', title:'Free garlic bread', sub:'On any 2 regular pizzas', tag:'New', tagClass:'new', badgeClass:'blue' },
+    ],
+    menu:[
+      { emoji:'🍕', name:'Margherita', price:'₹199', pts:'+20 pts' },
+      { emoji:'🍕', name:'Pepperoni', price:'₹349', pts:'+40 pts' },
+      { emoji:'🍕', name:'Farm House', price:'₹299', pts:'+35 pts' },
+      { emoji:'🧀', name:'Garlic Bread', price:'₹99', pts:'+10 pts' },
+      { emoji:'🥤', name:'Pepsi 500ml', price:'₹79', pts:'+8 pts' },
+      { emoji:'🍝', name:'Pasta', price:'₹179', pts:'+20 pts' },
+    ]
+  },
+  '3M Auto': {
+    icon:'🚗', type:'auto', dist:'3.8 km', pts:120, hours:'9AM–8PM',
+    offers:[
+      { emoji:'✨', title:'₹150 off detailing', sub:'DriveUp members · Today only', tag:'DriveUp Exclusive', tagClass:'driveup', badgeClass:'amber' },
+      { emoji:'🔧', title:'Free AC check', sub:'With any service above ₹800', tag:'New', tagClass:'new', badgeClass:'blue' },
+    ],
+    menu:[
+      { emoji:'✨', name:'Full Detailing', price:'₹1499', pts:'+120 pts' },
+      { emoji:'🪞', name:'Polish', price:'₹799', pts:'+80 pts' },
+      { emoji:'🧽', name:'Interior Clean', price:'₹499', pts:'+50 pts' },
+      { emoji:'🔧', name:'AC Service', price:'₹699', pts:'+70 pts' },
+      { emoji:'🛞', name:'Tyre Polish', price:'₹299', pts:'+30 pts' },
+    ]
+  },
+  'Exppress': {
+    icon:'🫧', type:'auto', dist:'4.1 km', pts:50, hours:'8AM–9PM',
+    offers:[
+      { emoji:'🫧', title:'₹50 off premium wash', sub:'DriveUp exclusive · Any day', tag:'DriveUp Exclusive', tagClass:'driveup', badgeClass:'amber' },
+      { emoji:'⭐', title:'Loyalty stamp card', sub:'10 washes = 1 free', tag:'New', tagClass:'new', badgeClass:'blue' },
+    ],
+    menu:[
+      { emoji:'🫧', name:'Basic Wash', price:'₹149', pts:'+20 pts' },
+      { emoji:'✨', name:'Premium Wash', price:'₹299', pts:'+40 pts' },
+      { emoji:'🪟', name:'Glass Clean', price:'₹199', pts:'+25 pts' },
+      { emoji:'🧴', name:'Wax Polish', price:'₹499', pts:'+50 pts' },
+    ]
+  }
+};
+
+// ── PARTNER POPUP ────────────────────────────────────────
+function openPartnerPopup(partnerName) {
+  const p = PARTNER_DATA[partnerName];
+  if (!p) return;
+  activePartner = partnerName;
+
+  document.getElementById('pp-icon').textContent = p.icon;
+  document.getElementById('pp-name').textContent = partnerName;
+  document.getElementById('pp-meta').textContent = (p.type.charAt(0).toUpperCase()+p.type.slice(1)) + ' · Open now · ' + p.hours;
+  document.getElementById('pp-dist').textContent = '📍 ' + p.dist + ' away';
+  document.getElementById('pp-pts').textContent = p.pts;
+
+  // Offers
+  const offersEl = document.getElementById('pp-offers');
+  offersEl.innerHTML = p.offers.map(o => `
+    <div class="offer-card">
+      <div class="offer-badge ${o.badgeClass}">${o.emoji}</div>
+      <div class="offer-info">
+        <div class="offer-title">${o.title}</div>
+        <div class="offer-sub">${o.sub}</div>
+        <span class="offer-tag ${o.tagClass}">${o.tag}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Menu
+  const menuEl = document.getElementById('pp-menu');
+  menuEl.innerHTML = p.menu.map(m => `
+    <div class="menu-item-card" onclick="showToast('Added: ${m.name}')">
+      <div class="menu-item-emoji">${m.emoji}</div>
+      <div class="menu-item-name">${m.name}</div>
+      <div class="menu-item-price">${m.price}</div>
+      <div class="menu-item-pts">${m.pts}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('partner-popup').classList.add('open');
+}
+
+function closePartnerPopup() {
+  document.getElementById('partner-popup').classList.remove('open');
+  activePartner = null;
+}
+
+function navigateToPartner() {
+  if (!activePartner) return;
+  showToast('🧭 Navigating to ' + activePartner + '...');
+  closePartnerPopup();
+}
+
+function startPartnerMission() {
+  if (!activePartner) return;
+  showToast('🎯 Mission started: ' + activePartner);
+  closePartnerPopup();
+}
+
+// Simulated GPS data for when real GPS isn't available
+let simSpeed = 0, simTargetSpeed = 0;
+let simLat = 17.4449, simLng = 78.3498; // Hyderabad
+
+// ── PARTNERS & FRIENDS DATA ──
+const PARTNERS = [
+  { name:'Indian Oil', icon:'⛽', type:'fuel', ox:0.004, oy:-0.002 },
+  { name:'HPCL', icon:'⛽', type:'fuel', ox:-0.003, oy:0.005 },
+  { name:'BPCL', icon:'⛽', type:'fuel', ox:0.007, oy:0.003 },
+  { name:'CCD', icon:'☕', type:'food', ox:-0.005, oy:-0.004 },
+  { name:"Domino's", icon:'🍕', type:'food', ox:0.009, oy:-0.006 },
+  { name:'3M Auto', icon:'🚗', type:'auto', ox:-0.007, oy:0.008 },
+  { name:'Exppress', icon:'🫧', type:'auto', ox:0.006, oy:0.009 },
+];
+
+const FRIENDS = [
+  { name:'Arjun', icon:'🧑', dist:'1.2 km', ox:-0.002, oy:0.003 },
+  { name:'Priya', icon:'👩', dist:'3.4 km', ox:0.005, oy:-0.005 },
+  { name:'Karthik', icon:'🧔', dist:'5.8 km', ox:-0.008, oy:-0.003 },
+];
+
+// ── ONBOARDING ──────────────────────────────────────────
+function generateDriveId() {
+  return 'DU-' + Math.floor(10000 + Math.random() * 90000);
+}
+
+function registerUser() {
+  const name = document.getElementById('ob-name').value.trim();
+  const phone = document.getElementById('ob-phone').value.trim();
+  if (!name) { showObError('Please enter your name'); return; }
+  if (!phone || phone.length < 10) { showObError('Enter a valid phone number'); return; }
+  const id = generateDriveId();
+  userData = { name, phone, id, points: 1240, joined: Date.now() };
+  localStorage.setItem('driveup_user', JSON.stringify(userData));
+  launchApp();
+}
+
+function loginUser() {
+  const inputId = document.getElementById('ob-login-id').value.trim().toUpperCase();
+  if (!inputId.startsWith('DU-')) { showObError('Invalid DriveUp ID format'); return; }
+  userData = { name: 'Driver', phone: '', id: inputId, points: 840, joined: Date.now() };
+  localStorage.setItem('driveup_user', JSON.stringify(userData));
+  launchApp();
+}
+
+function showObError(msg) { showToast(msg); }
+
+function showLoginForm() {
+  document.getElementById('ob-register-form').style.display = 'none';
+  document.getElementById('ob-login-form').style.display = 'flex';
+}
+
+function showRegisterForm() {
+  document.getElementById('ob-login-form').style.display = 'none';
+  document.getElementById('ob-register-form').style.display = 'flex';
+}
+
+function launchApp() {
+  document.getElementById('onboarding').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  updateUserUI();
+  startApp();
+  maybeStartWalkthrough();
+}
+
+function logOut() {
+  localStorage.removeItem('driveup_user');
+  location.reload();
+}
+
+function updateUserUI() {
+  if (!userData) return;
+  const firstName = userData.name.split(' ')[0];
+  document.getElementById('hdr-name').textContent = firstName;
+  document.getElementById('popup-name').textContent = userData.name;
+  document.getElementById('popup-id').textContent = userData.id;
+  document.getElementById('prof-name').textContent = userData.name;
+  document.getElementById('prof-id').textContent = 'DriveUp ID: ' + userData.id;
+  document.getElementById('lb-my-id').textContent = userData.id;
+  document.getElementById('rewards-total').textContent = userData.points.toLocaleString();
+  document.getElementById('popup-pts').textContent = userData.points.toLocaleString();
+}
+
+// ── APP START ──────────────────────────────────────────
+function startApp() {
+  startMiniMapAnimation();
+  initGPS();
+  simulateSpeedAndFriends();
+}
+
+// ── BACK / HOME NAVIGATION ──────────────────────────────
+function goHome() {
+  if (currentTab === 'home') return;
+  const fromScreen = document.getElementById('screen-' + currentTab);
+  const toScreen   = document.getElementById('screen-home');
+
+  // Animate: current slides right out, home slides in from left
+  fromScreen.classList.add('slide-back-out');
+  toScreen.style.display = 'block';
+  toScreen.classList.add('slide-back-in');
+
+  setTimeout(() => {
+    fromScreen.classList.remove('active', 'slide-back-out');
+    fromScreen.style.display = '';
+    toScreen.classList.remove('slide-back-in');
+    toScreen.classList.add('active');
+  }, 280);
+
+  // Update tab bar
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-home').classList.add('active');
+  currentTab = 'home';
+}
+
+// Override switchTab to add forward slide animation
+const _origSwitchTab = switchTab;
+function switchTab(tab) {
+  if (tab === currentTab) return;
+  const fromScreen = document.getElementById('screen-' + currentTab);
+  const toScreen   = document.getElementById('screen-' + tab);
+  if (!toScreen) { _origSwitchTab(tab); return; }
+
+  const goingBack = tab === 'home';
+  fromScreen.classList.add(goingBack ? 'slide-back-out' : 'slide-out');
+  toScreen.style.display = 'block';
+  toScreen.classList.add(goingBack ? 'slide-back-in' : 'slide-in');
+
+  setTimeout(() => {
+    fromScreen.classList.remove('active', 'slide-out', 'slide-back-out');
+    fromScreen.style.display = '';
+    toScreen.classList.remove('slide-in', 'slide-back-in');
+    toScreen.classList.add('active');
+  }, 280);
+
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  currentTab = tab;
+}
+
+// ── SWIPE RIGHT TO GO HOME ──────────────────────────────
+(function initSwipe() {
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+  const SWIPE_THRESHOLD  = 80;   // min px horizontal distance
+  const SWIPE_MAX_Y      = 60;   // max px vertical drift allowed
+  const SWIPE_MAX_MS     = 350;  // max duration
+  const EDGE_ZONE        = 40;   // px from left edge to trigger
+
+  const screensEl = document.getElementById('screens');
+
+  screensEl.addEventListener('touchstart', e => {
+    touchStartX    = e.touches[0].clientX;
+    touchStartY    = e.touches[0].clientY;
+    touchStartTime = Date.now();
+
+    // Show swipe hint only when on a non-home screen and touch starts near left edge
+    if (currentTab !== 'home' && touchStartX < EDGE_ZONE) {
+      document.getElementById('swipe-hint').classList.add('show');
+    }
+  }, { passive: true });
+
+  screensEl.addEventListener('touchmove', e => {
+    if (currentTab === 'home') return;
+    const dx = e.touches[0].clientX - touchStartX;
+    // Provide a subtle drag visual while swiping right from edge
+    if (touchStartX < EDGE_ZONE && dx > 0) {
+      const progress = Math.min(dx / SWIPE_THRESHOLD, 1);
+      const activeScreen = document.getElementById('screen-' + currentTab);
+      activeScreen.style.transform = `translateX(${dx * 0.3}px)`;
+      activeScreen.style.opacity   = 1 - progress * 0.2;
+    }
+  }, { passive: true });
+
+  screensEl.addEventListener('touchend', e => {
+    document.getElementById('swipe-hint').classList.remove('show');
+
+    const dx   = e.changedTouches[0].clientX - touchStartX;
+    const dy   = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    const dt   = Date.now() - touchStartTime;
+    const fromEdge = touchStartX < EDGE_ZONE;
+
+    // Reset any drag transform
+    const activeScreen = document.getElementById('screen-' + currentTab);
+    if (activeScreen) {
+      activeScreen.style.transform = '';
+      activeScreen.style.opacity   = '';
+    }
+
+    const isSwipeRight = dx > SWIPE_THRESHOLD && dy < SWIPE_MAX_Y && dt < SWIPE_MAX_MS;
+    const isEdgeSwipe  = fromEdge && dx > 30; // shorter distance needed from edge
+
+    if (currentTab !== 'home' && (isSwipeRight || isEdgeSwipe)) {
+      goHome();
+    }
+  }, { passive: true });
+})();
+// ── END SWIPE ───────────────────────────────────────────
+
+// ── PROFILE POPUP ──────────────────────────────────────
+function openProfilePopup() {
+  document.getElementById('profile-popup').classList.add('open');
+}
+function closeProfilePopup() {
+  document.getElementById('profile-popup').classList.remove('open');
+}
+
+function shareUserId() {
+  if (!userData) return;
+  const id = userData.id;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(id).then(() => showToast('DriveUp ID copied: ' + id));
+  } else {
+    showToast('Your ID: ' + id);
+  }
+}
+
+function shareProfile() {
+  if (navigator.share) {
+    navigator.share({ title: 'DriveUp', text: `Join me on DriveUp! My ID: ${userData.id}`, url: location.href });
+  } else {
+    shareUserId();
+  }
+}
+
+// ── THEME ──────────────────────────────────────────────
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  const icon = isDark ? '☀️' : '🌙';
+  document.getElementById('theme-icon').textContent = icon;
+  const ti2 = document.getElementById('theme-icon2');
+  if (ti2) ti2.textContent = icon;
+}
+
+// ── SETTINGS TOGGLES ──────────────────────────────────
+function toggleSetting(id) {
+  const el = document.getElementById('toggle-' + id);
+  el.classList.toggle('on');
+  const isOn = el.classList.contains('on');
+  if (id === 'gps-tracking') {
+    if (isOn) initGPS(); else stopGPS();
+  }
+  showToast(id.replace(/-/g,' ') + ': ' + (isOn ? 'On' : 'Off'));
+}
+
+// ── MISSIONS FILTER ──────────────────────────────────
+function filterMissions(el, type) {
+  document.querySelectorAll('.missions-filter .filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Showing: ' + type + ' missions');
+}
+
+function setMapFilter(el, type) {
+  document.querySelectorAll('.map-fs-filters .filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  mapFilter = type;
+  drawFullMap();
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── MINI MAP ANIMATION ─────────────────────────────────
+function startMiniMapAnimation() {
+  const canvas = document.getElementById('mini-map-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let frame = 0;
+  let roadOffset = 0;
+
+  function drawMini() {
+    const W = 68, H = 68;
+    ctx.clearRect(0, 0, W, H);
+
+    // BG
+    ctx.fillStyle = isDark ? '#111' : '#e8e8e8';
+    ctx.beginPath(); ctx.arc(W/2,H/2,W/2,0,Math.PI*2); ctx.fill();
+
+    ctx.save(); ctx.beginPath(); ctx.arc(W/2,H/2,W/2,0,Math.PI*2); ctx.clip();
+
+    // Grid
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+    ctx.lineWidth = .5;
+    for (let x = (roadOffset%8); x < W; x+=8) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = (roadOffset%8); y < H; y+=8) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Roads
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.12)';
+    ctx.lineWidth = 3;
+    // horizontal
+    ctx.beginPath(); ctx.moveTo(0,H*.4); ctx.lineTo(W,H*.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,H*.7); ctx.lineTo(W,H*.7); ctx.stroke();
+    // vertical
+    ctx.beginPath(); ctx.moveTo(W*.35,0); ctx.lineTo(W*.35,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*.7,0); ctx.lineTo(W*.7,H); ctx.stroke();
+
+    // Partner dots
+    const partnerPositions = [
+      {x:W*.35, y:H*.4, c:'#f5a623'},
+      {x:W*.7, y:H*.7, c:'#60a5fa'},
+      {x:W*.2, y:H*.7, c:'#f5a623'},
+    ];
+    partnerPositions.forEach(p => {
+      ctx.fillStyle = p.c;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+    });
+
+    // User dot (pulsing)
+    const pulse = 3 + Math.sin(frame * .1) * 1.5;
+    ctx.fillStyle = 'rgba(245,166,35,.2)';
+    ctx.beginPath(); ctx.arc(W/2, H/2, pulse+4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#f5a623';
+    ctx.beginPath(); ctx.arc(W/2, H/2, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(W/2, H/2, 2, 0, Math.PI*2); ctx.fill();
+
+    ctx.restore();
+    roadOffset += .3;
+    frame++;
+    miniMapAnim = requestAnimationFrame(drawMini);
+  }
+  drawMini();
+}
+
+// ── FULL MAP ───────────────────────────────────────────
+function openMap() {
+  mapOpen = true;
+  document.getElementById('map-fullscreen').classList.add('open');
+  resizeFullCanvas();
+  drawFullMap();
+
+  // Attach tap listener (once)
+  const canvas = document.getElementById('full-map-canvas');
+  if (!canvas._listenerAdded) {
+    canvas._listenerAdded = true;
+    function handleMapTap(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const touch = e.touches ? e.touches[0] : e;
+      const cx = (touch.clientX - rect.left) * scaleX;
+      const cy = (touch.clientY - rect.top)  * scaleY;
+      // Check against cached pin positions (hit radius 24px)
+      for (const p of lastPPosCache) {
+        const dx = cx - p.x, dy = cy - p.y;
+        if (Math.sqrt(dx*dx + dy*dy) < 28) {
+          openPartnerPopup(p.name);
+          return;
+        }
+      }
+    }
+    canvas.addEventListener('click', handleMapTap);
+    canvas.addEventListener('touchend', handleMapTap, { passive:true });
+  }
+}
+
+function closeMap() {
+  mapOpen = false;
+  document.getElementById('map-fullscreen').classList.remove('open');
+}
+
+function resizeFullCanvas() {
+  const container = document.getElementById('map-canvas-full');
+  const canvas = document.getElementById('full-map-canvas');
+  canvas.width = container.offsetWidth;
+  canvas.height = container.offsetHeight;
+}
+
+let mapPanX = 0, mapPanY = 0, mapAnimFrame = 0;
+let lastPPosCache = []; // store rendered pin positions for hit-testing
+
+function drawFullMap() {
+  const canvas = document.getElementById('full-map-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  if (!W || !H) return;
+
+  ctx.clearRect(0,0,W,H);
+
+  // BG
+  ctx.fillStyle = isDark ? '#0f0f0f' : '#e8e8e8';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid texture
+  ctx.strokeStyle = isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.05)';
+  ctx.lineWidth = 1;
+  for (let x=0; x<W; x+=24) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y=0; y<H; y+=24) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Roads
+  const roads = [
+    {x1:0,y1:H*.25,x2:W,y2:H*.25,w:14},
+    {x1:0,y1:H*.55,x2:W,y2:H*.55,w:14},
+    {x1:0,y1:H*.8,x2:W,y2:H*.8,w:8},
+    {x1:W*.2,y1:0,x2:W*.2,y2:H,w:8},
+    {x1:W*.5,y1:0,x2:W*.5,y2:H,w:14},
+    {x1:W*.78,y1:0,x2:W*.78,y2:H,w:8},
+    {x1:0,y1:H*.25,x2:W*.5,y2:H*.55,w:6},
+  ];
+  roads.forEach(r => {
+    ctx.strokeStyle = isDark ? '#222' : '#d0d0d0';
+    ctx.lineWidth = r.w;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(r.x1,r.y1); ctx.lineTo(r.x2,r.y2); ctx.stroke();
+    // Road markings
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([12,12]);
+    ctx.beginPath(); ctx.moveTo(r.x1,r.y1); ctx.lineTo(r.x2,r.y2); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Area fills (city blocks)
+  const blocks = [
+    {x:W*.22,y:H*.27,w:W*.26,h:H*.26},
+    {x:W*.52,y:H*.27,w:W*.24,h:H*.26},
+    {x:W*.22,y:H*.57,w:W*.26,h:H*.21},
+    {x:W*.52,y:H*.57,w:W*.24,h:H*.21},
+    {x:0,y:H*.27,w:W*.18,h:H*.26},
+    {x:W*.8,y:H*.27,w:W*.2,h:H*.26},
+  ];
+  blocks.forEach(b => {
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,.025)' : 'rgba(0,0,0,.04)';
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+  });
+
+  // Partner pins
+  const pPos = [
+    {x:W*.2,  y:H*.25, name:'Indian Oil', icon:'⛽', type:'fuel'},
+    {x:W*.5,  y:H*.55, name:'HPCL',       icon:'⛽', type:'fuel'},
+    {x:W*.78, y:H*.25, name:'BPCL',       icon:'⛽', type:'fuel'},
+    {x:W*.35, y:H*.4,  name:'CCD',        icon:'☕', type:'food'},
+    {x:W*.65, y:H*.7,  name:"Domino's",   icon:'🍕', type:'food'},
+    {x:W*.15, y:H*.65, name:'3M Auto',    icon:'🚗', type:'auto'},
+    {x:W*.88, y:H*.65, name:'Exppress',   icon:'🫧', type:'auto'},
+  ];
+  lastPPosCache = pPos; // save for hit-testing
+
+  const fPos = [
+    {x:W*.3, y:H*.35, name:'Arjun', icon:'🧑', type:'friend'},
+    {x:W*.6, y:H*.6, name:'Priya', icon:'👩', type:'friend'},
+    {x:W*.45, y:H*.2, name:'Karthik', icon:'🧔', type:'friend'},
+  ];
+
+  // Draw partner pins
+  pPos.forEach(p => {
+    if (mapFilter !== 'all' && mapFilter !== p.type && !['friends','clan'].includes(mapFilter)) return;
+    if (['friends','clan'].includes(mapFilter)) return;
+
+    // Glow
+    const grad = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,22);
+    grad.addColorStop(0, 'rgba(245,166,35,.25)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(p.x,p.y,22,0,Math.PI*2); ctx.fill();
+
+    // Pin circle
+    ctx.fillStyle = isDark ? '#1a1a1a' : '#fff';
+    ctx.strokeStyle = '#f5a623';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p.x,p.y,16,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+    // Icon
+    ctx.font = '14px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.icon, p.x, p.y);
+
+    // Label
+    ctx.font = 'bold 10px "DM Sans", sans-serif';
+    ctx.fillStyle = isDark ? '#fff' : '#000';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, p.x, p.y + 26);
+  });
+
+  // Draw friend pins
+  if (['all','friends','clan'].includes(mapFilter)) {
+    fPos.forEach(f => {
+      const grad = ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,20);
+      grad.addColorStop(0, 'rgba(96,165,250,.25)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(f.x,f.y,20,0,Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = isDark ? '#1a1a1a' : '#fff';
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(f.x,f.y,14,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+      ctx.font = '12px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(f.icon, f.x, f.y);
+
+      ctx.font = 'bold 10px "DM Sans", sans-serif';
+      ctx.fillStyle = '#60a5fa';
+      ctx.fillText(f.name, f.x, f.y + 24);
+    });
+  }
+
+  // User position (center) — pulsing
+  const pulse = 6 + Math.sin(mapAnimFrame * .08) * 3;
+  ctx.fillStyle = 'rgba(245,166,35,.2)';
+  ctx.beginPath(); ctx.arc(W/2, H/2, pulse+8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(245,166,35,.4)';
+  ctx.beginPath(); ctx.arc(W/2, H/2, pulse, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#f5a623';
+  ctx.beginPath(); ctx.arc(W/2, H/2, 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 9px "DM Sans"';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('YOU', W/2, H/2);
+
+  mapAnimFrame++;
+  if (mapOpen) requestAnimationFrame(drawFullMap);
+}
+
+// ── GPS ────────────────────────────────────────────────
+function initGPS() {
+  if (!navigator.geolocation) {
+    setGPSStatus(false);
+    return;
+  }
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      gpsActive = true;
+      setGPSStatus(true);
+      const speed = pos.coords.speed ? pos.coords.speed * 3.6 : 0; // m/s to km/h
+      updateSpeedUI(speed);
+      updateDistance(pos.coords.latitude, pos.coords.longitude);
+    },
+    err => {
+      setGPSStatus(false);
+      console.log('GPS error:', err.message);
+    },
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+  );
+}
+
+function stopGPS() {
+  if (watchId) navigator.geolocation.clearWatch(watchId);
+  gpsActive = false;
+  setGPSStatus(false);
+}
+
+function setGPSStatus(active) {
+  gpsActive = active;
+  ['gps-dot','gps-dot2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', active);
+  });
+  ['gps-label','gps-label2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = active ? 'Live' : 'GPS';
+  });
+}
+
+function updateDistance(lat, lng) {
+  if (!driveStats.lastPos) {
+    driveStats.lastPos = { lat, lng };
+    driveStats.startTime = Date.now();
+    return;
+  }
+  const d = haversine(driveStats.lastPos.lat, driveStats.lastPos.lng, lat, lng);
+  if (d > 0.005) { // only count if moved > 5m
+    driveStats.dist += d;
+    driveStats.lastPos = { lat, lng };
+    updateStatsUI();
+  }
+}
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLng = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function updateSpeedUI(speed) {
+  const s = Math.round(speed);
+  const limit = 60;
+  const over = s > limit;
+
+  document.getElementById('current-speed').textContent = s;
+  document.getElementById('stats-speed').textContent = s;
+
+  const badge = document.getElementById('speed-indicator');
+  badge.classList.toggle('warning', over);
+
+  const pill = document.getElementById('speed-status-pill');
+  if (pill) {
+    pill.textContent = over ? '⚠ Over Limit' : 'OK';
+    pill.style.background = over ? 'rgba(248,113,113,.12)' : 'rgba(74,222,128,.12)';
+    pill.style.color = over ? 'var(--red)' : 'var(--green)';
+  }
+
+  const statusEl = document.getElementById('stats-limit-status');
+  if (statusEl) {
+    statusEl.textContent = over ? '⚠ Over Limit!' : '✓ Within Limit';
+    statusEl.className = over ? 'stats-limit-badge' : 'stats-limit-ok';
+  }
+}
+
+function updateStatsUI() {
+  const dist = driveStats.dist.toFixed(1);
+  document.getElementById('stats-dist').textContent = dist;
+  document.getElementById('dash-dist').textContent = dist + ' km';
+
+  const elapsed = driveStats.startTime ? Math.floor((Date.now()-driveStats.startTime)/1000) : 0;
+  const mins = Math.floor(elapsed/60), secs = elapsed%60;
+  document.getElementById('stats-time').textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+
+  const avg = elapsed > 0 ? (driveStats.dist / (elapsed/3600)).toFixed(1) : '0.0';
+  document.getElementById('stats-avg').textContent = avg;
+  document.getElementById('stats-co2').textContent = (driveStats.dist * 0.12).toFixed(1);
+}
+
+// ── SIMULATE SPEED (when GPS unavailable) ──────────────
+function simulateSpeedAndFriends() {
+  // Simulate realistic speed changes
+  setInterval(() => {
+    simTargetSpeed = Math.random() * 80;
+    simSpeed += (simTargetSpeed - simSpeed) * 0.1;
+    if (!gpsActive) {
+      // Only update speed sim when real GPS isn't available
+      updateSpeedUI(simSpeed);
+      // Simulate some distance
+      driveStats.dist += simSpeed / 360000;
+      if (!driveStats.startTime) driveStats.startTime = Date.now();
+      updateStatsUI();
+    }
+  }, 800);
+
+  // Friend nearby notification
+  setTimeout(() => {
+    const toggle = document.getElementById('toggle-friend-notif');
+    if (toggle && toggle.classList.contains('on') && !friendBannerShown) {
+      friendBannerShown = true;
+      const banner = document.getElementById('friend-banner');
+      banner.style.display = 'flex';
+      setTimeout(() => { banner.style.display = 'none'; }, 6000);
+    }
+  }, 8000);
+}
+
+// ── WALKTHROUGH ────────────────────────────────────────
+const WT_STEPS = [
+  {
+    selector: null, // centre screen — intro card
+    title: 'Welcome to DriveUp 🚗',
+    body: 'Drive routes, earn points, unlock rewards at partner stores near you. Let\'s show you around!',
+    arrow: null, placement: 'center'
+  },
+  {
+    selector: '#hdr-name',
+    title: 'Your Driver Profile 👋',
+    body: 'Tap your name anytime to see past routes, rewards earned, and share your DriveUp ID.',
+    arrow: '↑', placement: 'below'
+  },
+  {
+    selector: '#map-circle-wrap',
+    title: 'Live Map 🗺',
+    body: 'This mini map is always live. Tap it to expand — see partner stores, friends, and clan members nearby.',
+    arrow: '↑', placement: 'below'
+  },
+  {
+    selector: '.mission-hero',
+    title: 'Daily Mission 🎯',
+    body: 'Each day you get a featured mission. Drive to the partner, pay via UPI, and earn DrivePoints instantly.',
+    arrow: '↑', placement: 'below'
+  },
+  {
+    selector: '#tab-missions',
+    title: 'Missions Tab 🏁',
+    body: 'Browse all active missions here — filter by Fuel, Food, Auto, or Streak challenges.',
+    arrow: '↑', placement: 'above'
+  },
+  {
+    selector: '#tab-rewards',
+    title: 'Rewards & Coupons 🎁',
+    body: 'Your points convert to real coupons — coffee, fuel discounts, car care. No cash, just perks.',
+    arrow: '↑', placement: 'above'
+  },
+  {
+    selector: '#tab-stats',
+    title: 'Drive Stats 🚀',
+    body: 'Live speed, distance driven today, CO₂ tracker, and your full trip history — all in one place.',
+    arrow: '↑', placement: 'above'
+  },
+];
+
+let wtStep = 0;
+let wtActive = false;
+
+function startWalkthrough() {
+  wtStep = 0;
+  wtActive = true;
+  document.getElementById('walkthrough').classList.add('active');
+  document.getElementById('walkthrough').style.pointerEvents = 'all';
+  renderWTStep();
+}
+
+function skipWalkthrough() {
+  document.getElementById('walkthrough').classList.remove('active');
+  document.getElementById('walkthrough').style.pointerEvents = 'none';
+  wtActive = false;
+  localStorage.setItem('driveup_wt_done', '1');
+}
+
+function wtNext() {
+  wtStep++;
+  if (wtStep >= WT_STEPS.length) { skipWalkthrough(); return; }
+  renderWTStep();
+}
+
+function renderWTStep() {
+  const step = WT_STEPS[wtStep];
+  const total = WT_STEPS.length;
+
+  // Update text
+  document.getElementById('wt-step-label').textContent = `Step ${wtStep + 1} of ${total}`;
+  document.getElementById('wt-title').textContent = step.title;
+  document.getElementById('wt-body').textContent = step.body;
+  document.getElementById('wt-next-btn').textContent = wtStep === total - 1 ? 'Done ✓' : 'Next →';
+
+  // Progress dots
+  const prog = document.getElementById('wt-progress');
+  prog.innerHTML = Array.from({length: total}, (_, i) =>
+    `<div class="wt-dot ${i === wtStep ? 'active' : ''}"></div>`
+  ).join('');
+
+  const spotlight = document.getElementById('wt-spotlight');
+  const ring      = document.getElementById('wt-ring');
+  const tooltip   = document.getElementById('wt-tooltip');
+
+  if (step.placement === 'center' || !step.selector) {
+    // No spotlight — centre card
+    spotlight.style.cssText = 'opacity:0; width:0; height:0; top:50%; left:50%;';
+    ring.style.cssText = 'opacity:0; width:0; height:0;';
+    tooltip.style.cssText = `
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 290px;
+    `;
+    tooltip.className = '';
+    return;
+  }
+
+  const el = document.querySelector(step.selector);
+  if (!el) { wtNext(); return; }
+
+  const rect = el.getBoundingClientRect();
+  const pad = 10;
+  const sLeft   = rect.left   - pad;
+  const sTop    = rect.top    - pad;
+  const sWidth  = rect.width  + pad * 2;
+  const sHeight = rect.height + pad * 2;
+
+  spotlight.style.cssText = `
+    left: ${sLeft}px; top: ${sTop}px;
+    width: ${sWidth}px; height: ${sHeight}px;
+    opacity: 1; border-radius: 14px;
+  `;
+
+  // Ring follows spotlight centre
+  const rSize = Math.max(sWidth, sHeight) + 20;
+  ring.style.cssText = `
+    left: ${sLeft + sWidth/2 - rSize/2}px;
+    top:  ${sTop  + sHeight/2 - rSize/2}px;
+    width: ${rSize}px; height: ${rSize}px;
+    opacity: 1;
+  `;
+
+  // Position tooltip
+  const TW = 260, TH = 160;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let tLeft, tTop, arrowClass;
+
+  if (step.placement === 'below') {
+    tTop  = sTop + sHeight + 20;
+    tLeft = Math.min(Math.max(sLeft, 12), vw - TW - 12);
+    arrowClass = 'arrow-top';
+    // flip above if not enough space
+    if (tTop + TH > vh - 80) {
+      tTop = sTop - TH - 20;
+      arrowClass = 'arrow-bottom';
+    }
+  } else { // above (tab bar items)
+    tTop  = sTop - TH - 20;
+    tLeft = Math.min(Math.max(sLeft - 20, 12), vw - TW - 12);
+    arrowClass = 'arrow-bottom';
+    if (tTop < 0) {
+      tTop = sTop + sHeight + 20;
+      arrowClass = 'arrow-top';
+    }
+  }
+
+  tooltip.style.cssText = `left:${tLeft}px; top:${tTop}px; width:${TW}px; transform:none;`;
+  tooltip.className = arrowClass;
+}
+
+// Kick off walkthrough after app launch (with small delay for render)
+function maybeStartWalkthrough() {
+  // Always offer walkthrough unless explicitly finished this session
+  // (uses sessionStorage so it shows once per session, respects "skip")
+  const done = sessionStorage.getItem('driveup_wt_session');
+  if (done) return;
+  sessionStorage.setItem('driveup_wt_session', '1');
+  setTimeout(startWalkthrough, 800);
+}
+// ── END WALKTHROUGH ────────────────────────────────────
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('driveup_user');
+  if (saved) {
+    try {
+      userData = JSON.parse(saved);
+      launchApp();
+    } catch(e) { /* show onboarding */ }
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (mapOpen) { resizeFullCanvas(); drawFullMap(); }
+});
+</script>
+</body>
+</html>
