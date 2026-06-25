@@ -3,145 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DriveUp - Drive-to-Earn</title>
-    
-    <!-- Leaflet CSS for Maps Integration -->
+    <title>DriveUp</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
     <style>
-        body, html { 
-            margin: 0; padding: 0; height: 100%; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; }
+        .view { display: none; height: calc(100vh - 60px); padding-bottom: 20px; }
+        .active { display: block; }
         
-        /* Map Container */
-        #map { height: 100vh; width: 100vw; z-index: 1; }
+        /* Bottom Nav */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: white; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ddd; z-index: 1000; }
+        .nav-btn { background: none; border: none; font-size: 12px; cursor: pointer; color: #7f8c8d; }
         
-        /* Floating Top Dashboard */
-        .dashboard { 
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
-            z-index: 1000; background: white; padding: 15px 40px; 
-            border-radius: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
-            display: flex; gap: 40px; align-items: center; 
-        }
-        .stat { text-align: center; }
-        .stat-value { font-size: 26px; font-weight: 800; color: #2ecc71; }
-        .stat-label { font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
-        
-        /* Social Layer: Clans */
-        .clan-panel { 
-            position: absolute; top: 100px; right: 20px; z-index: 1000; 
-            background: white; padding: 15px; border-radius: 15px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 220px; 
-        }
-        .clan-panel h3 { margin: 0 0 12px 0; font-size: 15px; color: #2c3e50; }
-        .clan-item { 
-            display: flex; justify-content: space-between; font-size: 13px; 
-            margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f1f2f6; 
-            color: #34495e;
-        }
-        .clan-item:last-child { border: none; margin: 0; padding: 0; }
-        
-        /* Mission Popup Styling */
-        .mission-btn { 
-            background: #3498db; color: white; border: none; padding: 10px 15px; 
-            border-radius: 6px; cursor: pointer; font-weight: bold; 
-            width: 100%; margin-top: 12px; transition: background 0.2s;
-        }
-        .mission-btn:hover { background: #2980b9; }
-        .mission-btn:disabled { background: #2ecc71; cursor: default; }
+        /* Common UI */
+        .page-header { padding: 20px; background: white; margin-bottom: 10px; }
+        .card { background: white; margin: 10px; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
-    <!-- UI Overlay: Rewards -->
-    <div class="dashboard">
-        <div class="stat">
-            <div class="stat-value" id="points-display">0</div>
-            <div class="stat-label">Drive Points</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value" id="upi-display">₹0</div>
-            <div class="stat-label">UPI Wallet</div>
-        </div>
+    <div id="map-view" class="view active"><div id="map" style="height: 100%;"></div></div>
+    <div id="rewards-view" class="view">
+        <div class="page-header"><h2>🎁 Rewards Wallet</h2></div>
+        <div class="card"><h3>Balance: ₹150</h3><button onclick="alert('Redirecting to UPI...')">Redeem Now</button></div>
+    </div>
+    <div id="clans-view" class="view">
+        <div class="page-header"><h2>🏆 Clan Leaderboard</h2></div>
+        <div class="card">1. Triumph Riders - 8,450 pts</div>
+    </div>
+    <div id="profile-view" class="view">
+        <div class="page-header"><h2>👤 Profile</h2></div>
+        <div class="card"><button>Login with Google</button></div>
     </div>
 
-    <!-- UI Overlay: Social Clans -->
-    <div class="clan-panel">
-        <h3>🏆 Local Leaderboard</h3>
-        <div class="clan-item"><strong>1. Triumph Riders</strong><span>8,450 pts</span></div>
-        <div class="clan-item"><span>2. Night Crawlers</span><span>7,200 pts</span></div>
-        <div class="clan-item"><span>3. Weekend Warriors</span><span>5,100 pts</span></div>
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="show('map-view')">📍 Map</button>
+        <button class="nav-btn" onclick="show('rewards-view')">🎁 Rewards</button>
+        <button class="nav-btn" onclick="show('clans-view')">🏆 Clans</button>
+        <button class="nav-btn" onclick="show('profile-view')">👤 Profile</button>
     </div>
 
-    <!-- The Map -->
-    <div id="map"></div>
-
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. Initialize Map centered on Hyderabad
-        const map = L.map('map', {zoomControl: false}).setView([17.3850, 78.4867], 13);
-        
-        // Add zoom control to bottom right so it doesn't overlap the dashboard
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        // Load map tiles from OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        // 2. Platform State
-        let points = 0;
-        const conversionRate = 0.5; // 1 point = ₹0.5
-
-        // Update UI function
-        function updateDashboard() {
-            document.getElementById('points-display').innerText = points;
-            document.getElementById('upi-display').innerText = '₹' + (points * conversionRate).toFixed(0);
+        function show(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
-
-        // 3. Mission Completion Logic (The Core IP)
-        window.completeMission = function(reward, btnElement) {
-            // Add points
-            points += reward;
-            updateDashboard();
-            
-            // Update UI State
-            btnElement.innerText = "Payout Sent! ✅";
-            btnElement.disabled = true;
-            
-            // Simulate instant UPI payout feedback
-            setTimeout(() => {
-                alert(`DriveUp Success: ₹${(reward * conversionRate).toFixed(0)} has been credited to your linked UPI ID.`);
-            }, 400);
-        }
-
-        // 4. Partner Node Data
-        const missions = [
-            { name: "IndianFuel Check-in", lat: 17.4000, lng: 78.4800, reward: 100, desc: "Refuel here today and earn instant cashback on your commute." },
-            { name: "Café Cheer Day", lat: 17.4100, lng: 78.4500, reward: 50, desc: "Stop by for an iced coffee. We are on your route!" },
-            { name: "Auto Service Pro", lat: 17.3700, lng: 78.5000, reward: 200, desc: "Book a routine oil change and claim your driver perk." }
-        ];
-
-        // 5. Render Missions on Map
-        missions.forEach(m => {
-            const marker = L.marker([m.lat, m.lng]).addTo(map);
-            
-            // Build the interactive popup
-            const popupContent = `
-                <div style="text-align: center; min-width: 160px; padding: 5px;">
-                    <h3 style="margin: 0 0 5px 0; font-size: 16px; color: #2c3e50;">${m.name}</h3>
-                    <p style="margin: 0 0 12px 0; color: #7f8c8d; font-size: 12px; line-height: 1.4;">${m.desc}</p>
-                    <div style="font-weight: bold; color: #f39c12; margin-bottom: 10px; font-size: 14px;">
-                        🎯 Reward: ${m.reward} pts
-                    </div>
-                    <button class="mission-btn" onclick="completeMission(${m.reward}, this)">Complete Mission</button>
-                </div>
-            `;
-            marker.bindPopup(popupContent);
-        });
+        const map = L.map('map').setView([17.3850, 78.4867], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     </script>
 </body>
 </html>
